@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PhysioVerse: Into the Physics Verse
 
-## Getting Started
+Game fisika orang pertama. Masuk ke fasilitas uji, jalan sendiri ke konsol kendali,
+atur parameter, lalu saksikan hasilnya dari mata kepala sendiri.
 
-First, run the development server:
+Next.js 16 (App Router) · Tailwind v4 · Supabase · React Three Fiber + postprocessing.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Menjalankan
+
+1. **Database sudah pernah diisi skema v1?** Jalankan `supabase/migrations/0002_singleplayer.sql`
+   di SQL Editor. **Project baru?** Jalankan `supabase/schema.sql` saja.
+2. Authentication → Providers → Email: matikan **Confirm email**.
+3. `cp .env.example .env.local`, isi URL + anon/publishable key.
+4. `pnpm install && pnpm dev` → http://localhost:3000
+
+Daftar satu akun (callsign + email + password), lalu langsung main. Tidak ada guru,
+tidak ada PIN — semua level sudah ada di dalam game.
+
+## Kontrol
+
+`W A S D` jalan · `SHIFT` lari · mouse melihat · `E` buka konsol (harus dekat meja) ·
+`ESC` lepas kursor.
+
+## Struktur
+
+```
+lib/physics.ts           rumus murni (lensa tipis, parabola, GLBB)
+lib/levels.ts            katalog 6 misi: kontrol, target, toleransi, XP
+app/play/                pilih misi (progres, XP, rekor) + halaman main
+app/play/actions.ts      mencatat percobaan; nilai dihitung ulang di server
+components/game/
+  Game.tsx               state mesin permainan + overlay
+  Hud.tsx                crosshair, kartu misi, telemetri, konsol, hasil
+  World.tsx              Canvas, cahaya, bloom, pointer lock
+  Player.tsx             kontroler orang pertama (tanpa engine fisika)
+  Room.tsx               aula, dinding, strip neon, meja konsol
+  chambers/              ballistics · photonics · kinetics
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Menambah misi atau ruangan
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Misi baru di ruangan yang sudah ada: tambah satu entri di `LEVELS` (`lib/levels.ts`).
+Ruangan baru: satu file di `components/game/chambers/` + satu baris di `VIEWS`
+(`components/game/World.tsx`) + satu entri di `CHAMBERS`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Tes ikut memastikan tiap level benar-benar bisa diselesaikan dengan slider yang ada,
+dan tidak lolos hanya dengan nilai default:
 
-## Learn More
+```bash
+node --test lib/physics.test.ts lib/levels.test.ts
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Catatan keamanan
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `finishRun` menghitung ulang nilai dari parameter konsol pakai `level.solve` yang sama,
+  lalu menilai sendiri. Mengarang `solved` dari devtools tidak berpengaruh.
+- `sanitizeParams` menjepit tiap parameter ke rentang slidernya sebelum dinilai.
+- RLS: pemain hanya bisa membaca dan menulis run miliknya sendiri. Papan rekor lewat
+  view `leaderboard` yang cuma mengeluarkan callsign + waktu.
