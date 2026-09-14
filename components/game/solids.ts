@@ -17,7 +17,10 @@ export function solidsFor(level: Level): Box[] {
         box(COURT.origin, 0.9, 0, 0.4, 0.95, 0.4), // penembak
       ];
     case "photonics":
-      return [box(level.marker ?? 6, 2.6, 0, 0.12, 2.5, 1.2)]; // kolom detektor
+      // tanpa marker detektornya memang tidak digambar — jangan tinggalkan dinding tak terlihat
+      return level.marker === undefined
+        ? []
+        : [box(level.marker, 2.6, 0, 0.12, 2.5, 1.2)]; // kolom detektor
     case "kinetics":
       return [
         box(0, 0.15, 0, railHalf, 0.15, 1), // badan rel
