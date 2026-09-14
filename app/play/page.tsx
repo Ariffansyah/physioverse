@@ -12,17 +12,24 @@ const secs = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 export default async function ChamberSelect() {
   const { supabase, profile } = await requireUser();
 
+  // Katalog misi hidup di lib/levels.ts, sementara runs.level_id cuma kolom
+  // teks tanpa foreign key — jadi baris dari versi katalog lama masih
+  // tersimpan. Dibatasi ke id yang sekarang ada, supaya yang tuntas tidak
+  // pernah melebihi jumlah misi.
+  const ids = LEVELS.map((l) => l.id);
+
   // Tiga kueri kecil dan berbatas, bukan satu kueri yang menarik seluruh
   // riwayat percobaan ke server tiap kali halaman ini dibuka.
   const [{ data: wins }, { count: attempts }, { data: records }] = await Promise.all([
     supabase
       .from("runs")
       .select("level_id, elapsed_ms")
+      .in("level_id", ids)
       .eq("solved", true)
       .order("elapsed_ms", { ascending: true })
       .limit(200)
       .returns<Run[]>(),
-    supabase.from("runs").select("*", { count: "exact", head: true }),
+    supabase.from("runs").select("*", { count: "exact", head: true }).in("level_id", ids),
     supabase.from("leaderboard").select("level_id, username, elapsed_ms").returns<Holder[]>(),
   ]);
 
@@ -62,7 +69,7 @@ export default async function ChamberSelect() {
             {/* Mistar bergraduasi, bukan bilah progres membulat. */}
             <div className="relative h-px bg-rule">
               <div
-                className="absolute inset-y-0 left-0 bg-champagne transition-[width] duration-1000 ease-settle"
+                className="absolute inset-y-0 left-0 bg-champagne shadow-[0_0_10px_var(--color-champagne)] transition-[width] duration-1000 ease-spring"
                 style={{ width: `${(xp / totalXp) * 100}%` }}
               />
               {LEVELS.map((l, i) => (
@@ -97,24 +104,35 @@ export default async function ChamberSelect() {
 
                   const row = (
                     <div
-                      className={`grid gap-2 border-b border-rule py-6 transition-all duration-500 ease-settle md:grid-cols-[4.5rem_minmax(0,15rem)_minmax(0,1fr)_auto] md:items-baseline md:gap-8 ${
-                        locked ? "opacity-40" : "group-hover:border-[color:var(--tint)] group-hover:pl-4"
+                      className={`flood grid gap-2 border-b border-rule py-6 md:grid-cols-[4.5rem_minmax(0,15rem)_minmax(0,1fr)_auto] md:items-baseline md:gap-8 ${
+                        locked ? "opacity-40" : "group-hover:border-[color:var(--tint)] group-hover:pl-5"
                       }`}
                       style={{ ["--tint" as string]: chamber.tint }}
                     >
-                      <span className="font-mono text-[11px] leading-[1.9] tracking-[0.26em] text-ashdim">
+                      {/* Nomornya dibesarkan: ini layar pilih level, bukan tabel. */}
+                      <span className="font-mono text-[2.4rem] leading-none tabular-nums text-ashdim/40 transition-colors duration-500 ease-settle group-hover:text-[color:var(--tint)]">
                         {String(globalIdx + 1).padStart(2, "0")}
                       </span>
 
-                      <h3 className="text-lg font-light text-starlight">{level.name}</h3>
+                      <h3 className="text-lg font-light text-starlight transition-transform duration-500 ease-spring group-hover:translate-x-1">
+                        {level.name}
+                      </h3>
 
                       <div className="grid gap-1.5">
                         <p className="max-w-[54ch] text-[15px] text-ash">{level.objective}</p>
                         <p className="font-mono text-xs text-quantum/75">{level.clue.relation}</p>
                       </div>
 
-                      <div className="grid gap-1 font-mono text-[11px] tabular-nums text-ashdim md:text-right">
-                        <span className={done ? "text-champagne" : locked ? "" : "text-quantum"}>
+                      <div className="grid justify-items-start gap-1.5 font-mono text-[11px] tabular-nums text-ashdim md:justify-items-end md:text-right">
+                        <span
+                          className={`rounded-[2px] border px-2 py-1 tracking-[0.18em] ${
+                            done
+                              ? "border-champagne/55 text-champagne"
+                              : locked
+                                ? "border-rule"
+                                : "border-[color:var(--tint)]/45 text-[color:var(--tint)]"
+                          }`}
+                        >
                           {done ? "TUNTAS" : locked ? "TERKUNCI" : "SIAP"}
                         </span>
                         {done && <span>waktumu {secs(best.get(level.id)!)}</span>}

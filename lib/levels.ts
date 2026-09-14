@@ -53,32 +53,32 @@ export type Level = {
 export const CHAMBERS: Record<ChamberKey, { name: string; tint: string; blurb: string }> = {
   ballistics: {
     name: "Ballistic Bay",
-    tint: "#c9a87c",
+    tint: "#f0b463",
     blurb: "Terowongan uji balistik. Lintasan parabola, tanpa hambatan udara.",
   },
   court: {
     name: "Hoops Court",
-    tint: "#e8a04a",
+    tint: "#f79a42",
     blurb: "Lapangan basket fisika - atur bola langsung, lihat jarak ke ring.",
   },
   photonics: {
     name: "Photon Hall",
-    tint: "#7fa9c9",
+    tint: "#5fb8ef",
     blurb: "Bangku optik sepanjang 20 meter dengan lensa yang bisa digeser.",
   },
   kinetics: {
     name: "Kinetic Rail",
-    tint: "#9fb3a6",
+    tint: "#6fd49a",
     blurb: "Rel magnetik 20 meter dengan gerbang pengukur di ujungnya.",
   },
   quantum: {
     name: "Quantum Well",
-    tint: "#b3aec2",
+    tint: "#8fb0f2",
     blurb: "Sumber foton tunggal, dua celah dan layar bergraduasi.",
   },
   gravity: {
     name: "Orbit Well",
-    tint: "#aab4bd",
+    tint: "#b9c6d6",
     blurb: "Satu massa pusat dan cincin penanda konsentris.",
   },
 };

@@ -102,59 +102,61 @@ export default function Landing() {
     <>
       <main className="relative z-2 flex-1">
         {/* ── Apertur ───────────────────────────────────────────────────── */}
-        <header className="relative grid min-h-[92svh] content-center overflow-hidden px-6 py-28 sm:px-10 lg:px-16">
+        <header className="relative grid min-h-[96svh] content-end overflow-hidden px-6 pb-14 pt-32 sm:px-10 lg:px-16">
           <FringeField />
+          {/* Medannya dibiarkan terang di atas lalu meredup ke bawah, jadi
+              teksnya duduk di sisi gelap horizon. */}
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-[linear-gradient(94deg,var(--color-obsidian)_14%,rgb(10_14_18/0.82)_46%,rgb(10_14_18/0.18)_80%)]"
+            className="absolute inset-0 bg-[linear-gradient(to_top,var(--color-obsidian)_14%,rgb(8_14_26/0.62)_48%,rgb(8_14_26/0.04)_90%)]"
           />
 
-          <div className="relative mx-auto grid w-full max-w-[1480px] gap-10 lg:grid-cols-12 lg:items-end">
-            <div className="lg:col-span-7">
-              <p className="tag">Laboratorium fisika orang pertama</p>
-              <h1 className="mt-6 text-[clamp(3rem,1.1rem+7vw,6.5rem)] leading-[0.95] tracking-[-0.03em]">
-                PhysioVerse
-              </h1>
-              <p className="mt-3 font-serif text-[clamp(1.25rem,1rem+1vw,1.9rem)] italic leading-tight text-champagne">
-                Into the Physics Verse
-              </p>
-              <p className="mt-7 max-w-[52ch] text-[clamp(1.0625rem,1rem+0.3vw,1.1875rem)] text-ash">
-                Cahaya tidak pernah memilih satu jalan, dan proyektil tidak pernah berunding
-                soal jatuhnya. Enam ruang uji, satu aturan: kamu diberi persamaannya, tidak
-                pernah jawabannya.{" "}
-                <b className="font-normal text-starlight">
-                  Atur instrumennya, hitung sendiri di kertas, lalu lihat apakah alam sepakat.
-                </b>
-              </p>
+          <div className="relative mx-auto w-full max-w-[1480px]">
+            <p className="tag">Laboratorium fisika orang pertama</p>
+            <h1 className="halo mt-6 text-[clamp(3rem,1.1rem+7vw,6.5rem)] leading-[0.95] tracking-[-0.03em]">
+              PhysioVerse
+            </h1>
+            <p className="mt-3 font-serif text-[clamp(1.25rem,1rem+1vw,1.9rem)] italic leading-tight text-champagne">
+              Into the Physics Verse
+            </p>
+            <p className="mt-7 max-w-[52ch] text-[clamp(1.0625rem,1rem+0.3vw,1.1875rem)] text-ash">
+              Cahaya tidak pernah memilih satu jalan, dan proyektil tidak pernah berunding
+              soal jatuhnya. Enam ruang uji, satu aturan: kamu diberi persamaannya, tidak
+              pernah jawabannya.{" "}
+              <b className="font-normal text-starlight">
+                Atur instrumennya, hitung sendiri di kertas, lalu lihat apakah alam sepakat.
+              </b>
+            </p>
 
-              <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2">
-                <Link
-                  href="/play"
-                  className="rounded-[2px] border border-rule bg-graphite/60 px-7 py-3.5 text-[15px] transition-all duration-500 ease-settle hover:border-champagne hover:tracking-[0.02em] hover:text-champagne"
-                >
-                  Masuk laboratorium
-                </Link>
-                <a
-                  href="#metode"
-                  className="py-3.5 text-[15px] text-ash transition-all duration-500 ease-settle hover:tracking-[0.02em] hover:text-starlight"
-                >
-                  Cara kerjanya
-                </a>
-              </div>
+            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2">
+              <Link
+                href="/play"
+                className="rounded-[2px] border border-rule bg-graphite/60 px-7 py-3.5 text-[15px] transition-all duration-500 ease-spring hover:-translate-y-0.5 hover:border-champagne hover:text-champagne hover:shadow-[0_0_28px_-8px_var(--color-champagne)]"
+              >
+                Masuk laboratorium
+              </Link>
+              <a
+                href="#metode"
+                className="py-3.5 text-[15px] text-ash transition-all duration-500 ease-settle hover:tracking-[0.02em] hover:text-starlight"
+              >
+                Cara kerjanya
+              </a>
             </div>
 
-            <dl className="grid gap-4 border-l border-rule pl-6 lg:col-span-4 lg:col-start-9 lg:pb-2">
+            {/* Horizon: satu garis selebar halaman, lalu pembacaan instrumen
+                yang hidup di bawahnya. */}
+            <dl className="mt-16 grid grid-cols-2 gap-x-10 gap-y-7 border-t border-rule pt-7 sm:grid-cols-4">
               {[
                 ["Celah d", "d"],
                 ["Layar L", "L"],
                 ["Gelombang λ", "w"],
                 ["Orde terbaca", "m"],
               ].map(([label, key]) => (
-                <div key={key} className="flex items-baseline justify-between gap-6">
+                <div key={key} className="grid gap-2">
                   <dt className="tag">{label}</dt>
                   <dd
                     data-echo={key}
-                    className="font-mono text-[15px] tabular-nums text-quantum"
+                    className="font-mono text-[clamp(1.05rem,0.9rem+0.4vw,1.35rem)] tabular-nums text-quantum"
                   >
                     &nbsp;
                   </dd>
@@ -165,7 +167,7 @@ export default function Landing() {
         </header>
 
         {/* ── Metode ────────────────────────────────────────────────────── */}
-        <section id="metode" className="mx-auto w-full max-w-[1480px] px-6 py-24 sm:px-10 lg:px-16">
+        <section id="metode" className="rise mx-auto w-full max-w-[1480px] px-6 py-24 sm:px-10 lg:px-16">
           <div className="mb-14 grid gap-4">
             <p className="tag">Cara main</p>
             <h2 className="text-[clamp(1.9rem,1.1rem+2.6vw,3.15rem)] leading-tight">
@@ -177,9 +179,9 @@ export default function Landing() {
             {LOOP.map((step) => (
               <li
                 key={step.key}
-                className="grid gap-2 border-b border-rule py-7 transition-all duration-500 ease-settle hover:border-quantum-deep hover:pl-4 md:grid-cols-[7rem_minmax(0,15rem)_minmax(0,1fr)] md:items-baseline md:gap-8"
+                className="group grid gap-2 border-b border-rule py-7 transition-all duration-500 ease-spring hover:border-quantum-deep hover:pl-5 md:grid-cols-[7rem_minmax(0,15rem)_minmax(0,1fr)] md:items-baseline md:gap-8"
               >
-                <kbd className="justify-self-start rounded-[2px] border border-rule px-2 py-1 font-mono text-[11px] tracking-[0.14em] text-ash">
+                <kbd className="justify-self-start rounded-[2px] border border-rule px-2 py-1 font-mono text-[11px] tracking-[0.14em] text-ash transition-colors duration-500 ease-settle group-hover:border-quantum group-hover:text-quantum">
                   {step.key}
                 </kbd>
                 <h3 className="text-xl font-light leading-snug text-starlight">{step.head}</h3>
@@ -191,31 +193,38 @@ export default function Landing() {
 
         {/* ── Ruang uji ─────────────────────────────────────────────────── */}
         <section className="mx-auto w-full max-w-[1480px] px-6 py-24 sm:px-10 lg:px-16">
-          <p className="tag mb-12">Ruang uji</p>
+          <p className="rise tag mb-12">Ruang uji</p>
 
-          <div className="grid gap-10 lg:gap-16">
+          <div className="grid gap-16 lg:gap-24">
             {(Object.keys(CHAMBERS) as ChamberKey[]).map((key, i) => {
               const chamber = CHAMBERS[key];
               return (
                 <article
                   key={key}
-                  className={`panel grid gap-4 p-8 transition-colors duration-700 ease-settle hover:border-[color:var(--tint)] ${OFFSET[i]}`}
+                  className={`rise group relative grid gap-4 pt-8 ${OFFSET[i]}`}
                   style={{ ["--tint" as string]: chamber.tint }}
                 >
+                  {/* Tepinya menyala dan meluruh, bukan kotak berisi. */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,var(--tint),transparent_64%)] opacity-45 transition-opacity duration-700 ease-settle group-hover:opacity-100"
+                  />
                   <svg
                     viewBox="0 0 48 48"
                     fill="none"
                     stroke="var(--tint)"
                     strokeWidth="1"
                     aria-hidden="true"
-                    className="size-11"
+                    className="lamp size-16"
                   >
                     {GLYPH[key]}
                   </svg>
                   <h3 className="text-2xl" style={{ color: chamber.tint }}>
                     {chamber.name}
                   </h3>
-                  <p className="font-serif text-lg italic text-quantum">{EQUATION[key]}</p>
+                  <p className="font-serif text-lg italic text-quantum transition-colors duration-500 ease-settle group-hover:text-[color:var(--tint)]">
+                    {EQUATION[key]}
+                  </p>
                   <p className="max-w-[58ch] text-[15px] text-ash">{chamber.blurb}</p>
 
                   <ul className="mt-3">
@@ -241,7 +250,7 @@ export default function Landing() {
           <div className="mt-16 flex flex-wrap items-center gap-x-8 gap-y-3">
             <Link
               href="/play"
-              className="rounded-[2px] border border-rule bg-graphite/60 px-7 py-3.5 text-[15px] transition-all duration-500 ease-settle hover:border-champagne hover:tracking-[0.02em] hover:text-champagne"
+              className="rounded-[2px] border border-rule bg-graphite/60 px-7 py-3.5 text-[15px] transition-all duration-500 ease-spring hover:-translate-y-0.5 hover:border-champagne hover:text-champagne hover:shadow-[0_0_28px_-8px_var(--color-champagne)]"
             >
               Lihat daftar misi
             </Link>

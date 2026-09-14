@@ -46,7 +46,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-8 w-full rounded-[2px] border border-rule bg-graphite-hi py-3.5 text-[15px] transition-all duration-500 ease-settle hover:border-champagne hover:tracking-[0.02em] hover:text-champagne disabled:opacity-45"
+        className="mt-8 w-full rounded-[2px] border border-rule bg-graphite-hi py-3.5 text-[15px] transition-all duration-500 ease-spring hover:-translate-y-0.5 hover:border-champagne hover:text-champagne hover:shadow-[0_0_28px_-8px_var(--color-champagne)] disabled:opacity-45 disabled:hover:translate-y-0"
       >
         {pending ? "Menghubungkan" : register ? "Daftar dan masuk" : "Masuk"}
       </button>

@@ -1,25 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-obsidian: #080c11;
-  --color-well: #04070a;
-  --color-graphite: #121820;
-  --color-graphite-hi: #19212a;
-  --color-rule: #222c36;
-  --color-starlight: #e4e8ea;
-  --color-ash: #7e8a95;
-  --color-ashdim: #525d67;
-  --color-quantum: #7fa9c9;
-  --color-quantum-deep: #3e637e;
-  --color-champagne: #cbb08a;
-  --color-oxide: #b4796b;
-  --color-flux: #7ed3a6;
+  /* Langit malam yang sebenarnya bukan abu netral: indigo pekat dengan sisa
+     airglow. Aksen diambil dari garis emisi — OIII yang biru-hijau pucat,
+     Hα yang mawar berdebu, dan cahaya bintang yang hangat. */
+  --color-obsidian: #080e1a;
+  --color-well: #050a14;
+  --color-graphite: #141e2e;
+  --color-graphite-hi: #1e2a3d;
+  --color-rule: #2e3b53;
+  --color-starlight: #eaeef5;
+  --color-ash: #93a2b5;
+  --color-ashdim: #6b7a91;
+  --color-quantum: #63c9d6;
+  --color-quantum-deep: #3d7f94;
+  --color-champagne: #edbe70;
+  --color-oxide: #e08a72;
 
   --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   --ease-settle: cubic-bezier(0.16, 0.84, 0.28, 1);
+  /* Sedikit melewati tujuan lalu balik — gerak benda yang punya massa. */
+  --ease-spring: cubic-bezier(0.22, 1.4, 0.36, 1);
 }
 
 html {
@@ -36,13 +40,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Medan bintang: dua lapisan noise yang di-ambang jadi titik — dekat & jarang,
+   jauh & rapat. Lapisannya fixed, jadi halaman yang bergulir melewatinya sudah
+   memberi paralaks tanpa satu frame animasi pun. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: rgb(11 15 20 / 0.0);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .97 0 0 0 0 .92 3.5 0 0 0 -2.71'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='17'/%3E%3CfeColorMatrix values='0 0 0 0 .78 0 0 0 0 .85 0 0 0 0 .95 1.1 0 0 0 -.83'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"),
+    linear-gradient(168deg, #0f1c31 0%, var(--color-obsidian) 44%, #050a14 100%);
+  background-size:
+    520px 520px,
+    300px 300px,
+    cover;
+  background-position:
+    0 0,
+    137px 61px,
+    0 0;
 }
 
 body::after {
@@ -57,7 +75,7 @@ body::after {
 }
 
 @utility panel {
-  background: var(--color-graphite);
+  background: linear-gradient(177deg, var(--color-graphite-hi), var(--color-graphite) 62%);
   border: 1px solid var(--color-rule);
   border-radius: 0;
 }
@@ -66,6 +84,26 @@ body::after {
   background: var(--color-graphite);
   border: 1px solid var(--color-rule);
   border-radius: 0;
+}
+
+/* Baris yang tersentuh kebanjiran warna ruangannya sendiri. Dipakai bersama
+   `group` dan --tint yang dipasang di baris itu. */
+@utility flood {
+  transition:
+    background-color 0.4s var(--ease-settle),
+    padding-left 0.45s var(--ease-spring),
+    border-color 0.4s var(--ease-settle);
+}
+.group:hover .flood {
+  background-color: color-mix(in oklab, var(--tint) 8%, transparent);
+}
+
+@utility lamp {
+  filter: drop-shadow(0 0 10px color-mix(in oklab, var(--tint) 38%, transparent));
+  transition: filter 0.6s var(--ease-settle);
+}
+.group:hover .lamp {
+  filter: drop-shadow(0 0 24px color-mix(in oklab, var(--tint) 78%, transparent));
 }
 
 @utility tag {
@@ -124,4 +162,42 @@ input[type="number"]:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Judul besar mendapat halo tipis, bukan neon: cahaya yang bocor dari benda
+   terang di ruang gelap. */
+@utility halo {
+  text-shadow:
+    0 0 2.5rem rgb(99 201 214 / 0.26),
+    0 0 6rem rgb(237 190 112 / 0.13);
+}
+
+/* Bagian yang naik dan menajam saat masuk layar. Timeline-nya digerakkan
+   guliran, bukan JavaScript — tanpa dukungan browser, isinya tampil apa adanya. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translateY(1.25rem);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media not (prefers-reduced-motion: reduce) {
+    .rise {
+      animation: rise 1s var(--ease-settle) both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 18%;
+    }
+  }
+}
+
+/* Denyut untuk kerangka pemuatan: garis yang meredup, bukan balok abu berkilau. */
+@keyframes breathe {
+  50% {
+    opacity: 0.28;
+  }
+}
+.breathe {
+  animation: breathe 2.8s var(--ease-settle) infinite;
 }

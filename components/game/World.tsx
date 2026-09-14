@@ -63,8 +63,8 @@ export default function World({
       gl={{ antialias: false, powerPreference: "high-performance" }}
       camera={{ fov: 75, near: 0.2, far: 220 }}
     >
-      <color attach="background" args={["#04070a"]} />
-      <fog attach="fog" args={["#050912", 22, 130]} />
+      <color attach="background" args={["#050a14"]} />
+      <fog attach="fog" args={["#0a1424", 22, 130]} />
 
       <Stars radius={150} depth={75} count={7000} factor={3.4} saturation={0} fade speed={0.6} />
 
@@ -77,7 +77,7 @@ export default function World({
       <Environment resolution={64} frames={1}>
         <Lightformer form="rect" intensity={2.2} color="#ffd9a8" scale={[10, 4, 1]} position={[-8, 5, -6]} rotation={[0, 0.9, 0]} />
         <Lightformer form="rect" intensity={1.1} color={tint} scale={[14, 3, 1]} position={[7, 3, 5]} rotation={[0, -2.4, 0]} />
-        <Lightformer form="ring" intensity={0.9} color="#5f8fc4" scale={[8, 8, 1]} position={[0, 9, -4]} rotation={[-1.2, 0, 0]} />
+        <Lightformer form="ring" intensity={0.9} color="#63c9d6" scale={[8, 8, 1]} position={[0, 9, -4]} rotation={[-1.2, 0, 0]} />
         <Lightformer form="rect" intensity={0.35} color="#101820" scale={[20, 20, 1]} position={[0, -6, 0]} rotation={[1.57, 0, 0]} />
       </Environment>
 
