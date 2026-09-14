@@ -1,7 +1,27 @@
 import Link from "next/link";
 import Colophon from "@/components/Colophon";
 import FringeField from "@/components/FringeField";
+import MainMenu from "@/components/MainMenu";
 import { CHAMBERS, LEVELS, type ChamberKey } from "@/lib/levels";
+import { heightAtX, projectile } from "@/lib/physics";
+
+/** Kecepatan pinjaman: hanya penentu bentuk lengkung, bukan angka level. */
+const V = 14;
+
+/**
+ * Lintasan glyph digambar dari rumus yang sama dengan yang dipakai ruang uji,
+ * bukan kurva karangan. Diregangkan ke chord (x0,y0)-(x1,y1) dengan apex
+ * setinggi `peak` di atas chord itu — parabola miring tetap parabola.
+ */
+function arc(deg: number, x0: number, y0: number, x1: number, y1: number, peak: number) {
+  const { range, apex } = projectile(V, deg);
+  return Array.from({ length: 17 }, (_, i) => {
+    const u = i / 16;
+    const x = x0 + (x1 - x0) * u;
+    const y = y0 + (y1 - y0) * u - (heightAtX(V, deg, u * range) / apex) * peak;
+    return `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join("");
+}
 
 const LOOP = [
   {
@@ -10,9 +30,9 @@ const LOOP = [
     body: "Berjalan di dalam ruangan - lihat cincin, rel, atau ring basket dari dekat. Jarak & tinggi tertulis jelas di lantai dan tiang.",
   },
   {
-    key: "KETIK",
+    key: "E / TAB",
     head: "Atur objeknya langsung",
-    body: "Ketik sudut & tenaga di konsol yang melayang di depanmu - panelnya bisa kamu seret ke mana saja.",
+    body: "Buka konsol yang melayang di depanmu, ketik angkanya di sana - panelnya bisa kamu seret ke mana saja.",
   },
   {
     key: "RUMUS",
@@ -20,16 +40,16 @@ const LOOP = [
     body: "Rumus tetap ada di samping, tapi hasilnya tidak dibocorkan. Hitung sendiri, kirim, lalu lihat selisihmu.",
   },
   {
-    key: "SHOOT",
+    key: "KIRIM MISI",
     head: "Lihat hasilnya",
-    body: "Tekan SHOOT - bola/meriam meluncur, apex & landing kelihatan. Tepat masuk = XP, meleset = geser lagi!",
+    body: "Tekan KIRIM MISI - instrumennya jalan sesuai angkamu: bola melayang, sinar terbias, pola fringe muncul. Selisih hasilmu dengan target langsung tampil; masuk toleransi = XP.",
   },
 ];
 
 const GLYPH: Record<ChamberKey, React.ReactNode> = {
   ballistics: (
     <>
-      <path d="M2 40C14 8 34 8 46 40" strokeDasharray="2 3" />
+      <path d={arc(52, 2, 40, 46, 40, 30)} strokeDasharray="2 3" />
       <circle cx="2" cy="40" r="2.5" />
       <circle cx="46" cy="40" r="2.5" />
       <path d="M2 40 12 26" />
@@ -38,7 +58,7 @@ const GLYPH: Record<ChamberKey, React.ReactNode> = {
   court: (
     <>
       <ellipse cx="37" cy="24" rx="6" ry="6" />
-      <path d="M6 36 Q24 6 37 24" strokeDasharray="2 3" />
+      <path d={arc(58, 6, 36, 37, 24, 13)} strokeDasharray="2 3" />
       <circle cx="6" cy="36" r="2.5" />
     </>
   ),
@@ -61,7 +81,7 @@ const GLYPH: Record<ChamberKey, React.ReactNode> = {
     <>
       <path d="M14 4v16M14 28v16" />
       <circle cx="4" cy="24" r="2" />
-      <path d="M6 24h6" strokeDasharray="1 3" />
+      <path d="M6 24h6" strokeDasharray="1 4" />
       <path d="M40 4v40" opacity=".5" />
       {[8, 14, 20, 24, 28, 34, 40].map((y, i) => (
         <path key={y} d={`M${40 - (i % 2 ? 3 : 6)} ${y}h${i % 2 ? 3 : 6}`} />
@@ -87,32 +107,19 @@ const EQUATION: Record<ChamberKey, string> = {
   gravity: "T = 2π √(r³/μ)",
 };
 
-/** Tiga lebar berbeda, tiga pergeseran berbeda. Bukan tiga kartu sejajar. */
-const OFFSET = [
-  "max-w-[39rem]",
-  "ml-auto max-w-[33rem] lg:mr-20",
-  "max-w-[44rem] lg:ml-28",
-  "ml-auto max-w-[36rem] lg:mr-40",
-  "max-w-[41rem] lg:ml-12",
-  "max-w-[38rem] lg:mr-24",
-];
-
 export default function Landing() {
   return (
     <>
       <main className="relative z-2 flex-1">
-        {/* ── Apertur ───────────────────────────────────────────────────── */}
         <header className="relative grid min-h-[96svh] content-end overflow-hidden px-6 pb-14 pt-32 sm:px-10 lg:px-16">
           <FringeField />
-          {/* Medannya dibiarkan terang di atas lalu meredup ke bawah, jadi
-              teksnya duduk di sisi gelap horizon. */}
           <div
             aria-hidden="true"
             className="absolute inset-0 bg-[linear-gradient(to_top,var(--color-obsidian)_14%,rgb(8_14_26/0.62)_48%,rgb(8_14_26/0.04)_90%)]"
           />
 
           <div className="relative mx-auto w-full max-w-[1480px]">
-            <p className="tag">Laboratorium fisika orang pertama</p>
+            <p className="tag">Laboratorium fisika 3D</p>
             <h1 className="halo mt-6 text-[clamp(3rem,1.1rem+7vw,6.5rem)] leading-[0.95] tracking-[-0.03em]">
               PhysioVerse
             </h1>
@@ -120,27 +127,17 @@ export default function Landing() {
               Into the Physics Verse
             </p>
             <p className="mt-7 max-w-[52ch] text-[clamp(1.0625rem,1rem+0.3vw,1.1875rem)] text-ash">
-              Cahaya tidak pernah memilih satu jalan, dan proyektil tidak pernah berunding
-              soal jatuhnya. Enam ruang uji, satu aturan: kamu diberi persamaannya, tidak
-              pernah jawabannya.{" "}
+              Cahaya tidak pernah memilih satu jalan, dan proyektil tidak pernah
+              berunding soal jatuhnya. Enam ruang uji, satu aturan: kamu diberi
+              persamaannya, tidak pernah jawabannya.{" "}
               <b className="font-normal text-starlight">
-                Atur instrumennya, hitung sendiri di kertas, lalu lihat apakah alam sepakat.
+                Atur instrumennya, hitung sendiri di kertas, lalu lihat apakah
+                alam sepakat.
               </b>
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2">
-              <Link
-                href="/play"
-                className="rounded-[2px] border border-rule bg-graphite/60 px-7 py-3.5 text-[15px] transition-all duration-500 ease-spring hover:-translate-y-0.5 hover:border-champagne hover:text-champagne hover:shadow-[0_0_28px_-8px_var(--color-champagne)]"
-              >
-                Masuk laboratorium
-              </Link>
-              <a
-                href="#metode"
-                className="py-3.5 text-[15px] text-ash transition-all duration-500 ease-settle hover:tracking-[0.02em] hover:text-starlight"
-              >
-                Cara kerjanya
-              </a>
+            <div className="mt-10">
+              <MainMenu missions={LEVELS.length} chambers={Object.keys(CHAMBERS).length} />
             </div>
 
             {/* Horizon: satu garis selebar halaman, lalu pembacaan instrumen
@@ -167,7 +164,10 @@ export default function Landing() {
         </header>
 
         {/* ── Metode ────────────────────────────────────────────────────── */}
-        <section id="metode" className="rise mx-auto w-full max-w-[1480px] px-6 py-24 sm:px-10 lg:px-16">
+        <section
+          id="metode"
+          className="rise mx-auto w-full max-w-[1480px] px-6 py-24 sm:px-10 lg:px-16"
+        >
           <div className="mb-14 grid gap-4">
             <p className="tag">Cara main</p>
             <h2 className="text-[clamp(1.9rem,1.1rem+2.6vw,3.15rem)] leading-tight">
@@ -184,7 +184,9 @@ export default function Landing() {
                 <kbd className="justify-self-start rounded-[2px] border border-rule px-2 py-1 font-mono text-[11px] tracking-[0.14em] text-ash transition-colors duration-500 ease-settle group-hover:border-quantum group-hover:text-quantum">
                   {step.key}
                 </kbd>
-                <h3 className="text-xl font-light leading-snug text-starlight">{step.head}</h3>
+                <h3 className="text-xl font-light leading-snug text-starlight">
+                  {step.head}
+                </h3>
                 <p className="max-w-[62ch] text-[15px] text-ash">{step.body}</p>
               </li>
             ))}
@@ -192,57 +194,77 @@ export default function Landing() {
         </section>
 
         {/* ── Ruang uji ─────────────────────────────────────────────────── */}
-        <section className="mx-auto w-full max-w-[1480px] px-6 py-24 sm:px-10 lg:px-16">
-          <p className="rise tag mb-12">Ruang uji</p>
+        <section id="ruang" className="mx-auto w-full max-w-[1480px] px-6 py-24 sm:px-10 lg:px-16">
+          <div className="rise mb-12 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 border-b border-rule pb-4">
+            <p className="tag">Ruang uji</p>
+            <p className="font-mono text-xs tabular-nums text-ashdim">
+              {Object.keys(CHAMBERS).length} ruang · {LEVELS.length} misi ·{" "}
+              {LEVELS.reduce((sum, l) => sum + l.xp, 0)} XP
+            </p>
+          </div>
 
-          <div className="grid gap-16 lg:gap-24">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {(Object.keys(CHAMBERS) as ChamberKey[]).map((key, i) => {
               const chamber = CHAMBERS[key];
+              const missions = LEVELS.filter((l) => l.chamber === key);
               return (
-                <article
+                <Link
                   key={key}
-                  className={`rise group relative grid gap-4 pt-8 ${OFFSET[i]}`}
+                  href="/play"
+                  className="rise hud group relative grid content-start gap-3 p-6 transition-all duration-500 ease-spring hover:-translate-y-1 hover:border-[color:var(--tint)]"
                   style={{ ["--tint" as string]: chamber.tint }}
                 >
-                  {/* Tepinya menyala dan meluruh, bukan kotak berisi. */}
+                  {/* Tepi atasnya menyala dan meluruh, bukan kotak berisi. */}
                   <span
                     aria-hidden="true"
                     className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,var(--tint),transparent_64%)] opacity-45 transition-opacity duration-700 ease-settle group-hover:opacity-100"
                   />
-                  <svg
-                    viewBox="0 0 48 48"
-                    fill="none"
-                    stroke="var(--tint)"
-                    strokeWidth="1"
-                    aria-hidden="true"
-                    className="lamp size-16"
-                  >
-                    {GLYPH[key]}
-                  </svg>
+                  <div className="flex items-start justify-between gap-4">
+                    <svg
+                      viewBox="0 0 48 48"
+                      fill="none"
+                      stroke="var(--tint)"
+                      strokeWidth="1"
+                      aria-hidden="true"
+                      className="lamp size-14"
+                    >
+                      {GLYPH[key]}
+                    </svg>
+                    <span className="font-mono text-[2rem] leading-none tabular-nums text-ashdim/35 transition-colors duration-500 ease-settle group-hover:text-[color:var(--tint)]">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </div>
                   <h3 className="text-2xl" style={{ color: chamber.tint }}>
                     {chamber.name}
                   </h3>
-                  <p className="font-serif text-lg italic text-quantum transition-colors duration-500 ease-settle group-hover:text-[color:var(--tint)]">
+                  <p className="font-serif text-base italic text-quantum transition-colors duration-500 ease-settle group-hover:text-[color:var(--tint)]">
                     {EQUATION[key]}
                   </p>
-                  <p className="max-w-[58ch] text-[15px] text-ash">{chamber.blurb}</p>
+                  <p className="text-[14px] text-ash">{chamber.blurb}</p>
 
-                  <ul className="mt-3">
-                    {LEVELS.filter((l) => l.chamber === key).map((l) => (
+                  <ul className="mt-1 border-t border-rule">
+                    {missions.map((l) => (
                       <li
                         key={l.id}
-                        className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-rule py-3"
+                        className="flex items-baseline gap-3 border-b border-rule py-2.5 last:border-b-0"
                       >
-                        <span className="text-[15px] text-starlight">{l.name}</span>
+                        <span className="font-mono text-[11px] tabular-nums text-ashdim/55">
+                          {String(LEVELS.indexOf(l) + 1).padStart(2, "0")}
+                        </span>
+                        <span className="flex-1 text-[14px] text-starlight">{l.name}</span>
                         {/* Besaran yang dinilai boleh tampil, angkanya tidak:
                             target dibaca dari dalam ruangan, bukan dari sini. */}
-                        <span className="font-mono text-xs tabular-nums text-ashdim">
-                          {l.goal.label} · ± {l.goal.tolerance} {l.goal.unit}
+                        <span className="font-mono text-[11px] tabular-nums text-ashdim">
+                          ± {l.goal.tolerance} {l.goal.unit} · {l.xp} XP
                         </span>
                       </li>
                     ))}
                   </ul>
-                </article>
+
+                  <span className="mt-2 justify-self-end font-mono text-[11px] tracking-[0.18em] text-ashdim transition-colors duration-500 ease-settle group-hover:text-champagne">
+                    MASUK ▸
+                  </span>
+                </Link>
               );
             })}
           </div>
@@ -254,7 +276,9 @@ export default function Landing() {
             >
               Lihat daftar misi
             </Link>
-            <span className="font-mono text-[13px] text-ashdim">W A S D jalan, E atur objek, Shoot untuk coba</span>
+            <span className="font-mono text-[13px] text-ashdim">
+              W A S D jalan, E buka konsol, KIRIM MISI untuk coba
+            </span>
           </div>
         </section>
       </main>

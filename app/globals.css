@@ -106,6 +106,46 @@ body::after {
   filter: drop-shadow(0 0 24px color-mix(in oklab, var(--tint) 78%, transparent));
 }
 
+/* Garis putus-putus di glyph selalu berarti lintasan. Saat kartunya disentuh,
+   lintasannya jalan: dash-nya bergeser satu periode penuh, jadi geraknya
+   mulus tanpa satu frame JavaScript. */
+@keyframes drift {
+  to {
+    stroke-dashoffset: -5;
+  }
+}
+.group:hover .lamp [stroke-dasharray] {
+  animation: drift 0.55s linear infinite;
+}
+
+/* Kurung siku di dua sudut: kerangka HUD yang membingkai menu, bukan kotak
+   penuh yang menutup medan di belakangnya. */
+@utility bracket {
+  position: relative;
+}
+.bracket::before,
+.bracket::after {
+  content: "";
+  position: absolute;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--color-champagne);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.bracket::before {
+  top: 0;
+  left: 0;
+  border-right-width: 0;
+  border-bottom-width: 0;
+}
+.bracket::after {
+  right: 0;
+  bottom: 0;
+  border-left-width: 0;
+  border-top-width: 0;
+}
+
 @utility tag {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
