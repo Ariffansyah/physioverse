@@ -31,7 +31,21 @@ html {
 }
 
 body {
-  background: var(--color-obsidian);
+  /* Dua kantong emisi yang diam, supaya bintang yang hanyut di atasnya punya
+     latar yang tidak ikut bergerak. */
+  background:
+    radial-gradient(
+      1200px 680px at 76% 6%,
+      rgb(99 201 214 / 0.11),
+      transparent 66%
+    ),
+    radial-gradient(
+      1000px 560px at 10% 86%,
+      rgb(237 190 112 / 0.07),
+      transparent 64%
+    ),
+    linear-gradient(168deg, #0f1c31 0%, var(--color-obsidian) 44%, #050a14 100%);
+  background-attachment: fixed;
   color: var(--color-starlight);
   font-family: var(--font-sans);
   font-weight: 300;
@@ -41,26 +55,47 @@ body {
 }
 
 /* Medan bintang: dua lapisan noise yang di-ambang jadi titik — dekat & jarang,
-   jauh & rapat. Lapisannya fixed, jadi halaman yang bergulir melewatinya sudah
-   memberi paralaks tanpa satu frame animasi pun. */
+   jauh & rapat, hanyut ke arah berlawanan supaya terasa paralaks.
+
+   Digerakkan transform, bukan background-position. Pada 520px per 240 detik
+   lajunya cuma ~2 px/detik, dan background-position dilukis di piksel bulat —
+   jadi tiap bintang melompat satu piksel penuh tiap setengah detik. transform
+   diinterpolasi kompositor dengan presisi sub-piksel, jadi mulus. Tiap lapisan
+   digeser tepat satu ubin, dan kotaknya dilebihkan seukuran perjalanan itu
+   supaya tidak pernah ada tepi yang menganga. */
+@keyframes sail-near {
+  to {
+    transform: translate3d(520px, 520px, 0);
+  }
+}
+
+@keyframes sail-far {
+  to {
+    transform: translate3d(-300px, 300px, 0);
+  }
+}
+
 body::before {
   content: "";
   position: fixed;
-  inset: 0;
+  inset: -520px 0 0 -520px;
   z-index: 0;
   pointer-events: none;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .97 0 0 0 0 .92 3.5 0 0 0 -2.71'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='17'/%3E%3CfeColorMatrix values='0 0 0 0 .78 0 0 0 0 .85 0 0 0 0 .95 1.1 0 0 0 -.83'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"),
-    linear-gradient(168deg, #0f1c31 0%, var(--color-obsidian) 44%, #050a14 100%);
-  background-size:
-    520px 520px,
-    300px 300px,
-    cover;
-  background-position:
-    0 0,
-    137px 61px,
-    0 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .97 0 0 0 0 .92 26 0 0 0 -21'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  background-size: 520px 520px;
+  animation: sail-near 240s linear infinite;
+  will-change: transform;
+}
+
+/* Lapisan bintang jauh. Arahnya berlawanan dengan yang dekat, jadi tidak bisa
+   ikut menumpang satu transform yang sama — ia butuh kotaknya sendiri. */
+.cosmos .sky {
+  position: absolute;
+  inset: -300px -300px 0 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='17'/%3E%3CfeColorMatrix values='0 0 0 0 .78 0 0 0 0 .85 0 0 0 0 .95 9 0 0 0 -6.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  background-size: 300px 300px;
+  animation: sail-far 185s linear infinite;
+  will-change: transform;
 }
 
 body::after {
@@ -74,8 +109,78 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* ── Latar kosmik ──────────────────────────────────────────────────────────
+   Dipasang sekali di layout, jadi tiap halaman dapat langit yang sama.
+   Bintang hidup di body::before; di sini dua hal yang bukan bintang:
+   awan nebula dan pita galaksi. */
+.cosmos {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Dua awan emisi, masing-masing dikurung topeng radial supaya jadi benda yang
+   punya tempat — bukan kabut rata selayar. Alpha di feColorMatrix dicuramkan
+   agar hanya bagian terpadat yang tampil dan sisanya tinggal rongga gelap. */
+.cosmos::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='1400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0022' numOctaves='6' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 .26  0 0 0 0 .78  0 0 0 0 .88  0 0 0 2.4 -1.36'/%3E%3CfeGaussianBlur stdDeviation='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='1400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0035' numOctaves='6' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .86  0 0 0 0 .38  0 0 0 0 .60  0 0 0 2.1 -1.30'/%3E%3CfeGaussianBlur stdDeviation='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size:
+    140% 140%,
+    140% 140%;
+  background-position:
+    0% 0%,
+    100% 100%;
+  background-repeat: no-repeat;
+  mask-image:
+    radial-gradient(56% 50% at 20% 14%, #000 10%, transparent 74%),
+    radial-gradient(46% 42% at 82% 86%, #000 8%, transparent 72%);
+  mask-composite: add;
+  -webkit-mask-image:
+    radial-gradient(56% 50% at 20% 14%, #000 10%, transparent 74%),
+    radial-gradient(46% 42% at 82% 86%, #000 8%, transparent 72%);
+  -webkit-mask-composite: source-over;
+  mix-blend-mode: screen;
+  opacity: 0.62;
+}
+
+/* Pita galaksi: lapisan bintang yang jauh lebih rapat, dikurung ke satu jalur
+   miring. Kerapatan bintangnya yang bikin pita terbaca, bukan sapuan putih.
+   baseFrequency ditahan di .62 — mendekati Nyquist polanya jadi moaré. */
+.cosmos::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.62' numOctaves='1' seed='31'/%3E%3CfeColorMatrix values='0 0 0 0 .88 0 0 0 0 .91 0 0 0 0 1 7 0 0 0 -5.0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  background-size: 700px 700px;
+  mask-image: linear-gradient(
+    107deg,
+    transparent 33%,
+    #000 47%,
+    #000 55%,
+    transparent 70%
+  );
+  -webkit-mask-image: linear-gradient(
+    107deg,
+    transparent 33%,
+    #000 47%,
+    #000 55%,
+    transparent 70%
+  );
+  opacity: 0.5;
+}
+
 @utility panel {
-  background: linear-gradient(177deg, var(--color-graphite-hi), var(--color-graphite) 62%);
+  background: linear-gradient(
+    177deg,
+    var(--color-graphite-hi),
+    var(--color-graphite) 62%
+  );
   border: 1px solid var(--color-rule);
   border-radius: 0;
 }
@@ -99,11 +204,15 @@ body::after {
 }
 
 @utility lamp {
-  filter: drop-shadow(0 0 10px color-mix(in oklab, var(--tint) 38%, transparent));
+  filter: drop-shadow(
+    0 0 10px color-mix(in oklab, var(--tint) 38%, transparent)
+  );
   transition: filter 0.6s var(--ease-settle);
 }
 .group:hover .lamp {
-  filter: drop-shadow(0 0 24px color-mix(in oklab, var(--tint) 78%, transparent));
+  filter: drop-shadow(
+    0 0 24px color-mix(in oklab, var(--tint) 78%, transparent)
+  );
 }
 
 /* Garis putus-putus di glyph selalu berarti lintasan. Saat kartunya disentuh,
@@ -129,7 +238,7 @@ body::after {
   position: absolute;
   width: 0.85rem;
   height: 0.85rem;
-  border: 1px solid var(--color-champagne);
+  border: 1px solid var(--tint, var(--color-champagne));
   opacity: 0.5;
   pointer-events: none;
 }
@@ -144,6 +253,84 @@ body::after {
   bottom: 0;
   border-left-width: 0;
   border-top-width: 0;
+}
+
+/* ── Perabot antarmuka permainan ──────────────────────────────────────────
+   Tiga bentuk yang dipakai berulang di semua halaman, supaya tombol di menu,
+   di konsol, dan di layar hasil terasa berasal dari mesin yang sama. */
+
+/* Tombol utama: pelat instrumen yang terangkat saat disentuh. */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 1px solid var(--color-rule);
+  background: var(--color-graphite);
+  padding: 0.85rem 1.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+  border-radius: 2px;
+  transition: all 0.45s var(--ease-spring);
+}
+.btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--tint, var(--color-champagne));
+  color: var(--tint, var(--color-champagne));
+  box-shadow: 0 0 30px -10px var(--tint, var(--color-champagne));
+}
+.btn:disabled {
+  opacity: 0.4;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Tombol yang membawa aksi utama layar: diisi penuh, bukan digariskan. */
+@utility btn-hot {
+  border-color: var(--color-champagne);
+  background: var(--color-champagne);
+  color: var(--color-obsidian);
+  font-weight: 500;
+}
+.btn-hot:hover {
+  color: var(--color-obsidian);
+  filter: brightness(1.08);
+}
+
+/* Lencana status: TUNTAS, SIAP, peringkat. Warnanya diambil dari --tint. */
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid
+    color-mix(in oklab, var(--tint, var(--color-rule)) 55%, transparent);
+  border-radius: 2px;
+  padding: 0.25rem 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tint, var(--color-ashdim));
+}
+
+/* Mistar XP bergraduasi — dipakai bilah kemajuan di beberapa layar. */
+@utility meter {
+  position: relative;
+  height: 1px;
+  background: var(--color-rule);
+}
+.meter > i {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  background: var(--color-champagne);
+  box-shadow: 0 0 10px var(--color-champagne);
+  transition: width 1s var(--ease-spring);
 }
 
 @utility tag {

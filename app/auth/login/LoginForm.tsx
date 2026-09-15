@@ -9,8 +9,11 @@ export default function LoginForm() {
   const [state, action, pending] = useActionState<AuthState, FormData>(authenticate, null);
 
   return (
-    <form action={action} className="panel w-full max-w-sm p-9">
-      <p className="tag">{register ? "Pendaftaran" : "Otentikasi"}</p>
+    <form action={action} className="panel bracket w-full max-w-sm p-9">
+      <div className="flex items-center justify-between gap-4">
+        <p className="tag">{register ? "Pendaftaran" : "Otentikasi"}</p>
+        <span className="chip [--tint:var(--color-quantum)]">Sistem siap</span>
+      </div>
       <h1 className="mt-3 text-3xl leading-tight">
         {register ? "Buat nama panggilan" : "Masuk laboratorium"}
       </h1>
@@ -46,9 +49,9 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-8 w-full rounded-[2px] border border-rule bg-graphite-hi py-3.5 text-[15px] transition-all duration-500 ease-spring hover:-translate-y-0.5 hover:border-champagne hover:text-champagne hover:shadow-[0_0_28px_-8px_var(--color-champagne)] disabled:opacity-45 disabled:hover:translate-y-0"
+        className="btn btn-hot mt-8 w-full"
       >
-        {pending ? "Menghubungkan" : register ? "Daftar dan masuk" : "Masuk"}
+        {pending ? "Menghubungkan…" : register ? "Daftar dan masuk" : "Masuk"}
       </button>
 
       <div className="mt-6 flex items-center justify-between text-sm">

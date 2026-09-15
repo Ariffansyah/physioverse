@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Level } from "@/lib/levels";
+import { play } from "@/lib/sfx";
 
 export const fmt = (v: number, digits = 2) => (Number.isFinite(v) ? v.toFixed(digits) : "∞");
 
@@ -52,12 +53,22 @@ export function ObjectiveCard({ level, startedAt }: { level: Level; startedAt: n
 export function ExitButton() {
   return (
     <div className="absolute bottom-6 right-6 grid justify-items-end gap-1.5">
-      <Link
-        href="/play"
-        className="hud px-4 py-2 font-mono text-xs tracking-[0.08em] text-ash transition-colors duration-500 ease-settle hover:text-starlight"
-      >
-        KELUAR ARENA
-      </Link>
+      <div className="flex gap-2">
+        <Link
+          href="/play"
+          onClick={() => play("back")}
+          className="hud px-4 py-2 font-mono text-xs tracking-[0.08em] text-ash transition-colors duration-500 ease-settle hover:border-champagne hover:text-champagne"
+        >
+          ◂ PILIH TAHAP
+        </Link>
+        <Link
+          href="/"
+          onClick={() => play("back")}
+          className="hud px-4 py-2 font-mono text-xs tracking-[0.08em] text-ash transition-colors duration-500 ease-settle hover:border-champagne hover:text-champagne"
+        >
+          MENU UTAMA
+        </Link>
+      </div>
       <span className="font-mono text-[10px] text-ashdim">ESC lepas kursor, lalu klik</span>
     </div>
   );
@@ -138,12 +149,19 @@ export function Briefing({ level, onEnter }: { level: Level; onEnter: () => void
         <div className="mt-9 flex items-center gap-6">
           <button
             type="button"
-            onClick={onEnter}
-            className="flex-1 border border-rule bg-graphite-hi py-3.5 text-[15px] text-starlight"
+            onClick={() => {
+              play("select");
+              onEnter();
+            }}
+            className="btn btn-hot flex-1"
           >
             Masuk arena
           </button>
-          <Link href="/play" className="text-sm text-ashdim">
+          <Link
+            href="/play"
+            onClick={() => play("back")}
+            className="font-mono text-[11px] tracking-[0.18em] uppercase text-ashdim transition-colors duration-500 ease-settle hover:text-champagne"
+          >
             Batal
           </Link>
         </div>
@@ -189,6 +207,12 @@ export function ResultCard({
 }) {
   const off = Math.abs(value - level.goal.target);
   const tone = solved ? "text-champagne" : "text-oxide";
+
+  // Dipicu sekali per hasil: `solved` ikut di deps supaya percobaan berikutnya
+  // berbunyi lagi, tapi render ulang biasa tidak.
+  useEffect(() => {
+    play(solved ? "win" : "fail");
+  }, [solved, elapsed]);
   return (
     <Overlay>
       <div className="panel w-full max-w-md p-9">
@@ -222,14 +246,17 @@ export function ResultCard({
         <div className="mt-8 flex gap-4">
           <button
             type="button"
-            onClick={onRetry}
-            className="flex-1 border border-rule py-3 text-sm text-ash"
+            onClick={() => {
+              play("select");
+              onRetry();
+            }}
+            className="btn flex-1"
           >
             Coba lagi
           </button>
           <Link
             href={solved && nextId ? `/play/${nextId}` : "/play"}
-            className="flex-1 border border-rule bg-graphite-hi py-3 text-center text-sm text-starlight"
+            className="btn btn-hot flex-1"
           >
             {solved && nextId ? "Misi berikutnya" : "Daftar misi"}
           </Link>
@@ -365,8 +392,11 @@ export function TweakPanel({
 
       <button
         type="button"
-        onClick={onRun}
-        className="mt-5 w-full border border-champagne bg-champagne py-3 font-mono text-sm font-medium tracking-[0.08em] text-obsidian"
+        onClick={() => {
+          play("run");
+          onRun();
+        }}
+        className="btn btn-hot mt-5 w-full"
       >
         KIRIM MISI
       </button>

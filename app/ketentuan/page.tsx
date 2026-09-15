@@ -19,8 +19,8 @@ export default function Ketentuan() {
         {
           head: "Apa yang disediakan",
           body: [
-            "Enam misi di tiga ruang uji, terbuka penuh tanpa biaya dan tanpa tingkat berbayar. Tidak ada fitur yang dikunci, karena mengunci ruang uji berarti mengunci pelajarannya.",
-            "Misi dibuka berurutan: satu misi terbuka setelah misi sebelumnya tuntas.",
+            "Delapan belas misi di enam ruang uji, terbuka penuh tanpa biaya dan tanpa tingkat berbayar. Tidak ada fitur yang dikunci, karena mengunci ruang uji berarti mengunci pelajarannya.",
+            "Semua misi terbuka sejak awal. Urutannya cuma saran, bukan gerbang — kamu boleh langsung ke ruang mana pun.",
           ],
         },
         {
@@ -35,13 +35,6 @@ export default function Ketentuan() {
           body: [
             "Silakan memakai, mempelajari, dan membicarakan hasilnya. Jangan menjalankan skrip otomatis untuk mengisi papan rekor, dan jangan mencoba menulis catatan percobaan atas nama pemain lain.",
             "Penilaian dihitung ulang di server dari parameter konsolmu, jadi mengubah nilai lewat peramban tidak mengubah apa pun kecuali membuang waktumu.",
-          ],
-        },
-        {
-          head: "Menghentikan akun",
-          body: [
-            "Kamu boleh berhenti kapan saja. Minta penghapusan lewat kontak yang tercantum, dan akun beserta seluruh catatan percobaannya dihapus, termasuk barisnya di papan rekor.",
-            "Kami bisa menutup akun yang dipakai untuk mengganggu pemain lain. Kalau itu terjadi, alasannya akan disampaikan.",
           ],
         },
         {

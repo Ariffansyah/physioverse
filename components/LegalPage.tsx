@@ -1,8 +1,14 @@
 import Link from "next/link";
 import Colophon from "@/components/Colophon";
+import MenuLink from "@/components/MenuLink";
 
 export type Clause = { head: string; body: string[] };
 
+/**
+ * Halaman hukum sebagai kodeks: pasalnya dipanel satu-satu seperti entri
+ * basis data, tapi tipografinya tetap dibiarkan enak dibaca — aturan yang
+ * tidak terbaca sama saja dengan aturan yang disembunyikan.
+ */
 export default function LegalPage({
   eyebrow,
   title,
@@ -16,43 +22,49 @@ export default function LegalPage({
 }) {
   return (
     <>
-      <header className="relative z-2 border-b border-rule px-6 py-5 sm:px-10 lg:px-16">
-        <Link href="/" className="font-serif text-lg tracking-tight">
-          PhysioVerse
-        </Link>
+      <header className="relative z-2 flex items-center justify-between gap-6 border-b border-rule bg-obsidian/70 px-6 py-4 backdrop-blur-sm sm:px-10 lg:px-16">
+<MenuLink />
+        <span className="chip hidden sm:inline-flex">Kodeks</span>
       </header>
 
-      <main className="relative z-2 mx-auto w-full max-w-[1480px] flex-1 px-6 py-20 sm:px-10 lg:px-16">
-        <div className="grid gap-4">
+      <main className="relative z-2 mx-auto w-full max-w-[1480px] flex-1 px-6 py-14 sm:px-10 lg:px-16">
+        <div className="grid gap-4 border-b border-rule pb-8">
           <p className="tag">{eyebrow}</p>
           <h1 className="text-[clamp(2rem,1.2rem+2.6vw,3.25rem)] leading-tight">{title}</h1>
           <p className="max-w-[58ch] text-[15px] leading-relaxed text-ash">{standfirst}</p>
         </div>
 
-        {/* Halaman hukum dapat tipografi yang sama dengan halaman lain,
-            bukan tumpukan teks kecil yang dibuang ke bawah. */}
-        <ol className="mt-14 border-t border-rule">
+        <ol className="mt-8 grid gap-4 lg:grid-cols-2">
           {clauses.map((c, i) => (
             <li
               key={c.head}
-              className="grid gap-3 border-b border-rule py-8 md:grid-cols-[4.5rem_minmax(0,1fr)] md:gap-8"
+              className="hud bracket grid content-start gap-3 p-6 transition-colors duration-500 ease-settle hover:border-quantum-deep"
             >
-              <span className="font-mono text-[11px] leading-[2.2] tracking-[0.26em] text-ashdim">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="grid gap-3">
-                <h2 className="font-serif text-xl font-light leading-snug text-starlight">
+              <div className="flex items-baseline gap-4">
+                <span className="font-mono text-[1.6rem] leading-none tabular-nums text-ashdim/35">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h2 className="flex-1 font-serif text-xl font-light leading-snug text-starlight">
                   {c.head}
                 </h2>
-                {c.body.map((p) => (
-                  <p key={p} className="max-w-[64ch] text-[15px] leading-relaxed text-ash">
-                    {p}
-                  </p>
-                ))}
               </div>
+              {c.body.map((p) => (
+                <p key={p} className="max-w-[64ch] text-[15px] leading-relaxed text-ash">
+                  {p}
+                </p>
+              ))}
             </li>
           ))}
         </ol>
+
+        <div className="mt-10 flex flex-wrap gap-4">
+          <Link href="/play" className="btn">
+            Ke daftar misi
+          </Link>
+          <Link href="/" className="btn">
+            Menu utama
+          </Link>
+        </div>
       </main>
 
       <Colophon />

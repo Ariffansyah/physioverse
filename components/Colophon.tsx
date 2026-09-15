@@ -1,29 +1,28 @@
 import Link from "next/link";
+import SoundToggle from "@/components/SoundToggle";
 
+/** Bilah status di kaki layar — bentuknya sama dengan baris kaki di menu utama. */
 export default function Colophon() {
   return (
     <footer className="relative z-2 border-t border-rule">
-      <div className="mx-auto grid w-full max-w-[1480px] gap-9 px-6 pb-20 pt-14 sm:px-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:px-16">
-        <nav className="flex flex-wrap gap-x-8 gap-y-1">
+      <div className="mx-auto flex w-full max-w-[1480px] flex-wrap items-center justify-between gap-x-8 gap-y-3 px-6 py-4 font-mono text-[11px] tracking-[0.18em] text-ashdim sm:px-10 lg:px-16">
+        <span>PHYSIOVERSE</span>
+        <nav className="flex flex-wrap items-center gap-x-7 gap-y-1">
           {[
-            ["/play", "Ruang uji"],
-            ["/ketentuan", "Ketentuan layanan"],
-            ["/privasi", "Kebijakan privasi"],
+            ["/play", "MISI"],
+            ["/ketentuan", "KETENTUAN"],
+            ["/privasi", "PRIVASI"],
           ].map(([href, label]) => (
             <Link
               key={href}
               href={href}
-              className="border-b border-transparent py-1.5 text-sm text-ash transition-colors duration-500 ease-settle hover:border-champagne hover:text-starlight"
+              className="transition-colors duration-500 ease-settle hover:text-champagne"
             >
               {label}
             </Link>
           ))}
+          <SoundToggle />
         </nav>
-        <p className="font-mono text-[13px] leading-[1.8] text-ashdim lg:text-right">
-          PhysioVerse
-          <br />
-          <span className="font-serif italic">Into the Physics Verse</span>
-        </p>
       </div>
     </footer>
   );

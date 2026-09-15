@@ -33,7 +33,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="id"
       className={`${newsreader.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Langit dipasang sekali di sini: tiap halaman mewarisi nebula dan
+            pita galaksi yang sama tanpa harus memasangnya sendiri. */}
+        <div aria-hidden="true" className="cosmos">
+          <span className="sky" />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

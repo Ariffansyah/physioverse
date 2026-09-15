@@ -169,6 +169,6 @@ export default function FringeField() {
   }, []);
 
   return (
-    <canvas ref={canvas} aria-hidden="true" className="absolute inset-0 size-full opacity-75" />
+    <canvas ref={canvas} aria-hidden="true" className="absolute inset-0 size-full opacity-50 mix-blend-screen sm:opacity-70 [mask-image:radial-gradient(78%_62%_at_50%_26%,#000_8%,transparent_76%)]" />
   );
 }
