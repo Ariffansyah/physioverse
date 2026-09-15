@@ -2,25 +2,9 @@
 
 import { ContactShadows, Grid, MeshReflectorMaterial } from "@react-three/drei";
 import { memo } from "react";
-import { AdditiveBlending, CanvasTexture, DoubleSide } from "three";
+import { AdditiveBlending, DoubleSide } from "three";
+import { glowTexture } from "@/lib/textures";
 import { BOUNDS, HALL } from "./hall";
-
-/** Satu tekstur gumpalan lembut, dipakai ulang semua awan nebula. */
-let puff: CanvasTexture | undefined;
-function puffTexture() {
-  if (puff) return puff;
-  const c = document.createElement("canvas");
-  c.width = c.height = 256;
-  const ctx = c.getContext("2d")!;
-  const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  g.addColorStop(0, "rgba(255,255,255,0.55)");
-  g.addColorStop(0.3, "rgba(255,255,255,0.18)");
-  g.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 256, 256);
-  puff = new CanvasTexture(c);
-  return puff;
-}
 
 const NEBULA: [[number, number, number], number, string][] = [
   [[-78, 28, -150], 170, "#3f6ea8"],
@@ -37,7 +21,7 @@ export const Room = memo(function Room({ tint }: { tint: string }) {
       {NEBULA.map(([pos, scale, color]) => (
         <sprite key={color} position={pos} scale={[scale, scale, 1]}>
           <spriteMaterial
-            map={puffTexture()}
+            map={glowTexture()}
             color={color}
             blending={AdditiveBlending}
             depthWrite={false}
@@ -48,7 +32,7 @@ export const Room = memo(function Room({ tint }: { tint: string }) {
         </sprite>
       ))}
 
-      {/* matahari jauh — bloom yang bikin silaunya */}
+
       <mesh position={[-118, 58, -148]}>
         <sphereGeometry args={[4.5, 24, 24]} />
         <meshBasicMaterial color="#ffe9c8" fog={false} />
@@ -75,9 +59,7 @@ export const Room = memo(function Room({ tint }: { tint: string }) {
         <meshStandardMaterial color="#232d3a" emissive="#4d637a" emissiveIntensity={0.3} fog={false} />
       </mesh>
 
-      {/* ponytail: reflector 256px + blur, naikkan kalau lantainya kelihatan kasar.
-         Tumpukan lantai: cermin 0 < grid 0.012 < contact shadow 0.015 < dekal chamber >= 0.02.
-         Jangan taruh apa pun sebidang persis — itu yang bikin lantai berkedip. */}
+
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[halfX * 2, halfZ * 2]} />
         <MeshReflectorMaterial
@@ -95,7 +77,7 @@ export const Room = memo(function Room({ tint }: { tint: string }) {
         />
       </mesh>
 
-      {/* ponytail: ContactShadows 256px — ganti shadow map beneran kalau kurang tajam */}
+
       <ContactShadows
         position={[0, 0.015, 0]}
         scale={[halfX * 2, halfZ * 2]}

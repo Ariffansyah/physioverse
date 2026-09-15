@@ -3,28 +3,30 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { finishRun } from "@/app/play/actions";
-import { LEVELS, getLevel, isSolved } from "@/lib/levels";
+import Loading from "@/components/Loading";
+import { LESSONS } from "@/lib/lesson";
+import { CHAMBERS, LEVELS, getLevel, isSolved } from "@/lib/levels";
+import { useTouch } from "@/lib/touch";
 import { Briefing, ClueCard, Crosshair, ExitButton, ObjectiveCard, ResultCard, TweakPanel } from "./Hud";
 import type { Lockable } from "./hall";
-import { VrPanel } from "./VrPanel";
 
 const World = dynamic(() => import("./World"), {
   ssr: false,
   loading: () => (
-    <div className="flex size-full items-center justify-center bg-well">
-      <div className="grid w-64 gap-3">
-        <span className="h-px w-full bg-rule" />
-        <span className="h-px w-2/3 bg-rule" />
-        <span className="h-px w-5/6 bg-rule" />
-        <p className="tag mt-2">Mengkalibrasi arena</p>
-      </div>
+    <div className="size-full bg-well">
+      <Loading label="Mengkalibrasi ruang uji" />
     </div>
   ),
 });
 
 export default function Game({ levelId }: { levelId: string }) {
   const level = getLevel(levelId)!;
+
+
+  const touch = useTouch();
+  const orbit = touch ? { ...LESSONS[level.chamber] } : undefined;
   const nextId = LEVELS[LEVELS.indexOf(level) + 1]?.id;
+  const tint = CHAMBERS[level.chamber].tint;
 
   const [params, setParams] = useState<Record<string, number>>(() => ({ ...level.defaults }));
   const [locked, setLocked] = useState(false);
@@ -73,9 +75,16 @@ export default function Game({ levelId }: { levelId: string }) {
 
   const enter = () => {
     setStartedAt(performance.now());
-    setDockOpen(false);
-    setTimeout(() => controls.current?.lock(), 60);
+    setDockOpen(touch);
+    if (!touch) setTimeout(() => controls.current?.lock(), 60);
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("autotest")) {
+      setStartedAt(performance.now());
+      setTimeout(() => setDockOpen(true), 300);
+    }
+  }, []);
 
   const run = () => {
     setDockOpen(false);
@@ -108,18 +117,13 @@ export default function Game({ levelId }: { levelId: string }) {
     setTimeout(() => controls.current?.lock(), 60);
   };
 
-  const hud =
-    startedAt > 0 && !result && dockOpen ? (
-      <VrPanel id="dock" offset={[0, 0, -1.05]} lag={7} interactive>
-        <TweakPanel
-          level={level}
-          params={params}
-          onChange={(key, v) => setParams((p) => ({ ...p, [key]: v }))}
-          onRun={run}
-          onClose={closeDock}
-        />
-      </VrPanel>
-    ) : null;
+  const panelProps = {
+    level,
+    params,
+    onChange: (key: string, v: number) => setParams((p) => ({ ...p, [key]: v })),
+    onRun: run,
+    onClose: closeDock,
+  } as const;
 
   return (
     <div className="relative z-2 h-[100dvh] w-full overflow-hidden">
@@ -135,7 +139,7 @@ export default function Game({ levelId }: { levelId: string }) {
           onUnlock={() => setLocked(false)}
           controlsRef={controls}
           onInteract={openDock}
-          hud={hud}
+          orbit={orbit}
         />
       </div>
 
@@ -145,9 +149,27 @@ export default function Game({ levelId }: { levelId: string }) {
           {!dockOpen && <ObjectiveCard level={level} startedAt={startedAt} />}
           {!dockOpen && <ClueCard level={level} />}
           <ExitButton />
-          {!dockOpen && !locked && (
+          {!dockOpen && !locked && !touch && (
             <div className="pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-3">
               <span className="hud px-4 py-2 text-xs text-ash">Klik arena untuk jalan, klik objek untuk atur</span>
+            </div>
+          )}
+
+
+          {!dockOpen && (
+            <button
+              type="button"
+              onClick={openDock}
+              style={{ background: tint, borderColor: tint, color: "var(--color-obsidian)" }}
+              className={`btn absolute z-20 py-3 font-medium ${touch ? "bottom-5 right-3" : "bottom-24 right-6 sm:bottom-24 sm:right-6"}`}
+            >
+              Atur alat{!touch && <span className="opacity-70"> atau klik E</span>}
+            </button>
+          )}
+
+          {dockOpen && (
+            <div className="absolute inset-x-2 bottom-2 z-20 flex justify-center">
+              <TweakPanel {...panelProps} />
             </div>
           )}
         </>

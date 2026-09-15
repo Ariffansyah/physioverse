@@ -1,14 +1,23 @@
 import {
   apoapsis,
   basketballHeight,
+  dragForce,
   fringeSpacing,
   glbb,
   optics,
   orbitPeriod,
   projectile,
+  topSpeed,
 } from "./physics.ts";
 
-export type ChamberKey = "ballistics" | "photonics" | "kinetics" | "quantum" | "gravity" | "court";
+export type ChamberKey =
+  | "ballistics"
+  | "photonics"
+  | "kinetics"
+  | "drag"
+  | "quantum"
+  | "gravity"
+  | "court";
 
 export const BAY = { origin: -19, scale: 0.55 };
 export const BENCH = { objectX: -10, objectH: 1 };
@@ -16,6 +25,9 @@ export const RAIL = { length: 20, scale: 0.8 };
 export const SLIT = { maskX: -6, unitsPerMetre: 4, screenMm: 30 };
 export const ORBIT = { scale: 0.35, centreY: 9 };
 export const COURT = { origin: -18, scale: 0.9, releaseH: 2.0, hoopH: 3.0 };
+
+
+export const WIND = { carX: -8, cd: 0.32, area: 2.2, mass: 1200, speedup: 30 };
 
 export const courtX = (metres: number) => COURT.origin + metres * COURT.scale;
 export const courtY = (metres: number) => metres * COURT.scale + 0.08;
@@ -71,6 +83,11 @@ export const CHAMBERS: Record<ChamberKey, { name: string; tint: string; blurb: s
     name: "Kinetic Rail",
     tint: "#6fd49a",
     blurb: "Rel magnetik 20 meter dengan gerbang pengukur di ujungnya.",
+  },
+  drag: {
+    name: "Wind Tunnel",
+    tint: "#e08a72",
+    blurb: "Terowongan angin dengan mobil uji dan dua anak panah gaya yang saling melawan.",
   },
   quantum: {
     name: "Quantum Well",
@@ -336,6 +353,69 @@ export const LEVELS: Level[] = [
     goal: { label: "Waktu Tempuh t", unit: "s", target: 3, tolerance: 0.1 },
     gauge: { tick: 0.5, major: 2, max: 6 },
     xp: 200,
+  },
+  {
+    id: "wind-01",
+    chamber: "drag",
+    name: "Laju Maksimum",
+    brief: "Mobil uji di terowongan angin. Mesin mendorong dengan gaya tetap, udara mendorong balik makin kuat kalau lajunya makin tinggi. Lajunya berhenti naik begitu keduanya sama besar.",
+    objective: "Cd = 0.32 tetap. Atur gaya dorong dan luas penampang depan agar laju maksimumnya 30 m/s.",
+    controls: [
+      { key: "thrust", label: "Gaya Dorong F", unit: "N", min: 100, max: 900, step: 5 },
+      { key: "area", label: "Luas Depan A", unit: "m²", min: 1.5, max: 3, step: 0.05 },
+    ],
+    defaults: { thrust: 400, area: 2.5, cd: 0.32 },
+    solve: (p) => topSpeed(p.thrust, p.cd ?? WIND.cd, p.area),
+    clue: {
+      relation: "v_maks = √(2F / (ρ · Cd · A))",
+      given: ["ρ udara = 1.2 kg/m³", "Cd = 0.32 tetap", "Target v = 30 m/s"],
+      hint: "Di laju maksimum gaya mesin persis sama dengan gaya hambat. Samakan keduanya, lalu cari v.",
+    },
+    goal: { label: "Laju Maksimum v", unit: "m/s", target: 30, tolerance: 0.5 },
+    gauge: { tick: 5, major: 2, max: 60 },
+    xp: 170,
+  },
+  {
+    id: "wind-02",
+    chamber: "drag",
+    name: "Dorongan Udara",
+    brief: "Mobilnya ditahan di laju tetap oleh rel uji. Yang dibaca alat sekarang gaya hambat udaranya, bukan lajunya.",
+    objective: "Cd = 0.32 tetap. Atur laju uji dan luas penampang agar gaya hambatnya 300 N.",
+    controls: [
+      { key: "speed", label: "Laju Uji v", unit: "m/s", min: 10, max: 40, step: 0.5 },
+      { key: "area", label: "Luas Depan A", unit: "m²", min: 1.5, max: 3, step: 0.05 },
+    ],
+    defaults: { speed: 20, area: 2, cd: 0.32 },
+    solve: (p) => dragForce(p.speed, p.cd ?? WIND.cd, p.area),
+    clue: {
+      relation: "F_hambat = ½ · ρ · Cd · A · v²",
+      given: ["ρ udara = 1.2 kg/m³", "Cd = 0.32 tetap", "Target F = 300 N"],
+      hint: "v dikuadratkan, A tidak. Menggandakan laju melipatempatkan hambatannya.",
+    },
+    goal: { label: "Gaya Hambat F", unit: "N", target: 300, tolerance: 8 },
+    gauge: { tick: 50, major: 2, max: 600 },
+    xp: 200,
+  },
+  {
+    id: "wind-03",
+    chamber: "drag",
+    name: "Bodi yang Licin",
+    brief: "Luas depannya dikunci 2.2 m². Yang boleh diubah tinggal bentuk bodinya, dan bentuk itu masuk hitungan lewat Cd.",
+    objective: "A = 2.2 m² tetap. Atur Cd dan gaya dorong agar laju maksimumnya 36 m/s.",
+    controls: [
+      { key: "cd", label: "Koefisien Hambat Cd", unit: "", min: 0.2, max: 0.45, step: 0.005 },
+      { key: "thrust", label: "Gaya Dorong F", unit: "N", min: 200, max: 900, step: 5 },
+    ],
+    defaults: { cd: 0.35, thrust: 400, area: 2.2 },
+    solve: (p) => topSpeed(p.thrust, p.cd, p.area ?? WIND.area),
+    clue: {
+      relation: "v_maks = √(2F / (ρ · Cd · A))",
+      given: ["ρ udara = 1.2 kg/m³", "A = 2.2 m² tetap", "Target v = 36 m/s"],
+      hint: "Cd duduk di penyebut dan di dalam akar. Menurunkannya separuh tidak menggandakan lajunya.",
+    },
+    goal: { label: "Laju Maksimum v", unit: "m/s", target: 36, tolerance: 0.5 },
+    gauge: { tick: 6, major: 2, max: 60 },
+    xp: 230,
   },
   {
     id: "well-01",

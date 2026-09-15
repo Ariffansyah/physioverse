@@ -84,15 +84,17 @@ export function VrPanel({
   return (
     <group ref={ref}>
       <group rotation={tilt}>
-        {/* ponytail: distanceFactor 0.6 => ~666px per meter, disetel mata */}
         <Html
           transform
           distanceFactor={0.6}
-          zIndexRange={[30, 0]}
+          zIndexRange={[60, 0]}
+          occlude={false}
           pointerEvents={interactive ? "auto" : "none"}
+          style={{ pointerEvents: interactive ? "auto" : "none" }}
         >
           <div
-            className={interactive ? "cursor-grab active:cursor-grabbing" : undefined}
+            className={interactive ? "cursor-grab active:cursor-grabbing select-none touch-none" : undefined}
+            style={{ touchAction: "none" }}
             onPointerDown={onDown}
             onPointerMove={onMove}
             onPointerUp={onUp}

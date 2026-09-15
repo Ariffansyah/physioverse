@@ -1,4 +1,7 @@
 import LegalPage from "@/components/LegalPage";
+import { CHAMBERS, LEVELS } from "@/lib/levels";
+
+const rooms = Object.keys(CHAMBERS).length;
 
 export const metadata = { title: "Ketentuan Layanan" };
 
@@ -19,8 +22,8 @@ export default function Ketentuan() {
         {
           head: "Apa yang disediakan",
           body: [
-            "Delapan belas misi di enam ruang uji, terbuka penuh tanpa biaya dan tanpa tingkat berbayar. Tidak ada fitur yang dikunci, karena mengunci ruang uji berarti mengunci pelajarannya.",
-            "Semua misi terbuka sejak awal. Urutannya cuma saran, bukan gerbang — kamu boleh langsung ke ruang mana pun.",
+            `${LEVELS.length} misi di ${rooms} ruang uji, terbuka penuh tanpa biaya dan tanpa tingkat berbayar. Tidak ada fitur yang dikunci, karena mengunci ruang uji berarti mengunci pelajarannya.`,
+            "Semua misi terbuka sejak awal. Urutannya cuma saran, bukan gerbang, jadi kamu boleh langsung ke ruang mana pun.",
           ],
         },
         {

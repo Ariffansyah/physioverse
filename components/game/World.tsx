@@ -1,12 +1,13 @@
 "use client";
 
-import { Environment, Lightformer, PointerLockControls, Stars } from "@react-three/drei";
+import { Environment, Lightformer, OrbitControls, PointerLockControls, Stars } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Bloom, ChromaticAberration, EffectComposer, Vignette } from "@react-three/postprocessing";
 import type { RefObject } from "react";
 import { CHAMBERS, getLevel } from "@/lib/levels";
 import Ballistics from "./chambers/ballistics";
 import Court from "./chambers/court";
+import Drag from "./chambers/drag";
 import Gravity from "./chambers/gravity";
 import Kinetics from "./chambers/kinetics";
 import Photonics from "./chambers/photonics";
@@ -20,6 +21,7 @@ const VIEWS: Record<string, (props: ChamberProps) => React.ReactNode> = {
   court: Court,
   photonics: Photonics,
   kinetics: Kinetics,
+  drag: Drag,
   quantum: Quantum,
   gravity: Gravity,
 };
@@ -28,7 +30,7 @@ export default function World({
   levelId,
   params,
   runToken,
-  active,
+  active = false,
   onFinish,
   onNear,
   onLock,
@@ -36,18 +38,26 @@ export default function World({
   controlsRef,
   onInteract,
   hud,
+  orbit,
 }: {
   levelId: string;
   params: Record<string, number>;
   runToken: number;
-  active: boolean;
+  active?: boolean;
   onFinish: (value: number) => void;
-  onNear: (near: boolean) => void;
-  onLock: () => void;
-  onUnlock: () => void;
-  controlsRef: RefObject<Lockable | null>;
+  onNear?: (near: boolean) => void;
+  onLock?: () => void;
+  onUnlock?: () => void;
+  controlsRef?: RefObject<Lockable | null>;
   onInteract?: () => void;
   hud?: React.ReactNode;
+
+  orbit?: {
+    camera: [number, number, number];
+    target: [number, number, number];
+
+    spin?: boolean;
+  };
 }) {
   const level = getLevel(levelId);
   if (!level) return null;
@@ -61,7 +71,7 @@ export default function World({
     <Canvas
       dpr={[1, 1.5]}
       gl={{ antialias: false, powerPreference: "high-performance" }}
-      camera={{ fov: 75, near: 0.2, far: 220 }}
+      camera={{ fov: orbit ? 45 : 75, near: 0.2, far: 220, position: orbit?.camera }}
     >
       <color attach="background" args={["#050a14"]} />
       <fog attach="fog" args={["#0a1424", 22, 130]} />
@@ -73,7 +83,7 @@ export default function World({
       <directionalLight position={[-12, 20, 8]} intensity={0.35} />
       <directionalLight position={[-118, 58, -148]} intensity={0.7} color="#ffd9a8" />
 
-      {/* Pantulan buat semua logam di chamber — tanpa ini metalness cuma jadi hitam. */}
+
       <Environment resolution={64} frames={1}>
         <Lightformer form="rect" intensity={2.2} color="#ffd9a8" scale={[10, 4, 1]} position={[-8, 5, -6]} rotation={[0, 0.9, 0]} />
         <Lightformer form="rect" intensity={1.1} color={tint} scale={[14, 3, 1]} position={[7, 3, 5]} rotation={[0, -2.4, 0]} />
@@ -98,17 +108,30 @@ export default function World({
           </mesh>
         </group>
       )}
-      <Player active={active} level={level} onNear={onNear} />
+      {!orbit && <Player active={active} level={level} onNear={onNear ?? (() => {})} />}
       {hud}
 
-      <PointerLockControls
-        selector="#play-surface"
-        onLock={onLock}
-        onUnlock={onUnlock}
-        ref={(instance) => {
-          controlsRef.current = instance;
-        }}
-      />
+      {orbit ? (
+        <OrbitControls
+          target={orbit.target}
+          enablePan={false}
+          minDistance={6}
+          maxDistance={40}
+          maxPolarAngle={Math.PI / 2 - 0.05}
+          autoRotate={orbit.spin}
+          autoRotateSpeed={0.35}
+          makeDefault
+        />
+      ) : (
+        <PointerLockControls
+          selector="#play-surface"
+          onLock={onLock}
+          onUnlock={onUnlock}
+          ref={(instance) => {
+            if (controlsRef) controlsRef.current = instance;
+          }}
+        />
+      )}
 
       <EffectComposer multisampling={4}>
         <Bloom

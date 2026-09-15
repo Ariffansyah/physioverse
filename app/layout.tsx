@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
 import "./globals.css";
 
-// Tiga suara: jurnal ilmiah, catatan teknisi, dan angka.
+
 const newsreader = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
-  // Hanya bobot yang benar-benar dipakai: 200 untuk judul, 300 untuk sisanya.
-  weight: ["200", "300"],
+
+  weight: ["300", "400"],
   style: ["normal", "italic"],
 });
 const plexSans = IBM_Plex_Sans({
@@ -27,6 +27,14 @@ export const metadata: Metadata = {
     "Laboratorium fisika orang pertama. Atur instrumennya, hitung sendiri jawabannya, lalu lihat apakah alam sepakat.",
 };
 
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#080e1a",
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -34,8 +42,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${newsreader.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {/* Langit dipasang sekali di sini: tiap halaman mewarisi nebula dan
-            pita galaksi yang sama tanpa harus memasangnya sendiri. */}
+
+
         <div aria-hidden="true" className="cosmos">
           <span className="sky" />
         </div>

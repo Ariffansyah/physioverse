@@ -4,27 +4,25 @@ import MenuLink from "@/components/MenuLink";
 
 export type Clause = { head: string; body: string[] };
 
-/**
- * Halaman hukum sebagai kodeks: pasalnya dipanel satu-satu seperti entri
- * basis data, tapi tipografinya tetap dibiarkan enak dibaca — aturan yang
- * tidak terbaca sama saja dengan aturan yang disembunyikan.
- */
+
 export default function LegalPage({
   eyebrow,
   title,
   standfirst,
   clauses,
+  chip = "Aturan",
 }: {
   eyebrow: string;
   title: string;
   standfirst: string;
   clauses: Clause[];
+  chip?: string;
 }) {
   return (
     <>
       <header className="relative z-2 flex items-center justify-between gap-6 border-b border-rule bg-obsidian/70 px-6 py-4 backdrop-blur-sm sm:px-10 lg:px-16">
-<MenuLink />
-        <span className="chip hidden sm:inline-flex">Kodeks</span>
+        <MenuLink />
+        <span className="chip hidden sm:inline-flex">{chip}</span>
       </header>
 
       <main className="relative z-2 mx-auto w-full max-w-[1480px] flex-1 px-6 py-14 sm:px-10 lg:px-16">
@@ -58,6 +56,9 @@ export default function LegalPage({
         </ol>
 
         <div className="mt-10 flex flex-wrap gap-4">
+          <Link href="/belajar" className="btn">
+            Mode belajar
+          </Link>
           <Link href="/play" className="btn">
             Ke daftar misi
           </Link>

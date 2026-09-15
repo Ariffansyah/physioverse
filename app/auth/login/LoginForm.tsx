@@ -11,16 +11,16 @@ export default function LoginForm() {
   return (
     <form action={action} className="panel bracket w-full max-w-sm p-9">
       <div className="flex items-center justify-between gap-4">
-        <p className="tag">{register ? "Pendaftaran" : "Otentikasi"}</p>
+        <p className="tag">{register ? "Daftar" : "Masuk"}</p>
         <span className="chip [--tint:var(--color-quantum)]">Sistem siap</span>
       </div>
       <h1 className="mt-3 text-3xl leading-tight">
-        {register ? "Buat nama panggilan" : "Masuk laboratorium"}
+        {register ? "Buat nama panggilan" : "Masuk ke lab"}
       </h1>
       <p className="mt-3 text-sm text-ash">
         {register
           ? "Nama panggilan dipakai di papan rekor. Kalau sudah terpakai, angka ditambahkan otomatis."
-          : "Catatan percobaanmu tersimpan di akun ini, termasuk yang gagal."}
+          : "Semua misi yang kamu kerjakan tersimpan di akun ini, termasuk yang gagal."}
       </p>
 
       <input type="hidden" name="mode" value={register ? "register" : "login"} />

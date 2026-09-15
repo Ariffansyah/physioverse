@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { play } from "@/lib/sfx";
+import { useTouch } from "@/lib/touch";
 
-/** Bentuk datar: `solve` di katalog level itu fungsi, dan fungsi tidak bisa
-    menyeberang batas server/klien. Server memipihkannya dulu. */
+
 export type Stage = {
   id: string;
   idx: number;
@@ -25,30 +25,15 @@ export type Stage = {
 
 const secs = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
-/**
- * Pilih tahap, kiri ke kanan. Satu rel mendatar berisi semua misi; yang
- * terpilih membesar dan ikut tergulir ke tengah. ← → memindahkan pilihan,
- * Enter membukanya — tombol panah dan sentuh tetap jalan untuk yang tidak
- * memakai papan tik.
- */
+
 export default function StageSelect({ stages }: { stages: Stage[] }) {
+  const touch = useTouch();
   const [sel, setSel] = useState(0);
   const track = useRef<HTMLUListElement>(null);
   const cards = useRef<(HTMLAnchorElement | null)[]>([]);
   const pending = useRef(0);
 
-  /**
-   * Menengahkan kartu dengan menggeser rel-nya sendiri.
-   *
-   * scrollIntoView tidak dipakai: ia menggulirkan semua leluhur yang bisa
-   * digulir, dan `overflow: hidden` tetap bisa digulir lewat skrip — jadi
-   * seluruh halaman ikut bergeser mendatar, kepala dan kakinya ikut hilang.
-   *
-   * Ukurannya diambil dari offsetLeft/offsetWidth, bukan getBoundingClientRect:
-   * kartu di samping diperkecil dengan transform, dan rect ikut mengecil —
-   * hitungannya jadi meleset. offset* memakai ukuran tata letak, yang tidak
-   * peduli transform.
-   */
+
   const center = (i: number, behavior: ScrollBehavior = "smooth") => {
     const el = cards.current[i];
     const rail = track.current;
@@ -59,8 +44,8 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
     });
   };
 
-  // Sekali saat pasang: tahap pertama yang belum tuntas ditaruh di tengah.
-  useEffect(() => center(sel, "auto"), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => center(sel, "auto"), []);
 
   const jump = (i: number, quiet = false, behavior: ScrollBehavior = "smooth") => {
     if (!quiet) play("move");
@@ -69,17 +54,7 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
     cards.current[i]?.focus({ preventScroll: true });
   };
 
-  /**
-   * Melingkar: lewat dari tahap terakhir kembali ke 01, dan sebaliknya. Kalau
-   * lompatannya melingkar, kartunya dipindah langsung tanpa animasi geser —
-   * geser mulus lintas 17 kartu akan terlihat seperti rel itu meluncur balik
-   * sendiri, bukan seperti berpindah ke ujung yang lain.
-   *
-   * "auto" BUKAN "instan": menurut spesifikasinya, "auto" berarti "ikuti
-   * scroll-behavior di CSS", dan rel ini punya kelas scroll-smooth — jadi
-   * "auto" tetap animasi mulus di sini. Yang benar-benar melompat tanpa
-   * animasi, terlepas dari CSS-nya, adalah "instant".
-   */
+
   const move = (step: number) => {
     const raw = sel + step;
     const wrapped = raw < 0 || raw >= stages.length;
@@ -87,11 +62,7 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
     if (next !== sel) jump(next, false, wrapped ? "instant" : "smooth");
   };
 
-  /**
-   * Geser manual (usap, roda, seret) juga memilih: yang berada di tengah rel
-   * adalah yang terpilih, dari mana pun gerakannya datang. Dibaca sekali per
-   * frame — peristiwa scroll datang jauh lebih sering daripada itu.
-   */
+
   const onScroll = () => {
     const rail = track.current;
     if (!rail || pending.current) return;
@@ -112,16 +83,11 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
     });
   };
 
-  /**
-   * Tuts panah dipasang di window, bukan di rel: di layar pilih tahap, ← →
-   * harus jalan begitu halaman terbuka, tanpa harus mengeklik relnya dulu.
-   * Kolom isian dilewatkan supaya panah tetap bisa memindahkan kursor teks.
-   */
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // e.target belum tentu elemen — kalau peristiwanya dikirim ke window,
-      // isinya objek window yang tidak punya closest(). `?.` tidak menolong:
-      // ia menjaga dari null, bukan dari metode yang memang tidak ada.
+
+
       const el = e.target;
       if (el instanceof Element && el.closest("input, textarea, select, [contenteditable]")) {
         return;
@@ -147,8 +113,8 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
 
   return (
     <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] content-center gap-6">
-      {/* Penunjuk ruang: kelompok tiga misi per ruang, yang sedang disorot
-          ikut menyala. Juga jadi pintasan lompat antar ruang. */}
+
+
       <ol className="flex flex-wrap items-center gap-x-2 gap-y-2 px-6 sm:px-10 lg:px-16">
         {stages.map((s, i) => {
           const first = i === 0 || stages[i - 1].chamber !== s.chamber;
@@ -174,7 +140,7 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
         })}
       </ol>
 
-      {/* Rel tahap ────────────────────────────────────────────────────── */}
+
       <div className="relative min-h-0">
         <ul
           ref={track}
@@ -183,8 +149,8 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
         >
           {stages.map((s, i) => {
             const on = i === sel;
-            // Jarak dari tengah menentukan besarnya — satu langkah ke samping
-            // sudah jelas lebih kecil, dua langkah atau lebih tinggal latar.
+
+
             const step = Math.abs(i - sel);
             const size =
               step === 0
@@ -199,10 +165,8 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
                     cards.current[i] = el;
                   }}
                   href={`/play/${s.id}`}
-                  /* Fokus dari papan tik memusatkan kartunya. Fokus dari klik
-                     sengaja tidak: mengeklik kartu samping memfokuskannya lebih
-                     dulu, dan kalau itu ikut memusatkan, klik yang sama langsung
-                     jadi "masuk" — klik pertama tidak pernah berarti "geser". */
+
+
                   onFocus={(e) => {
                     if (i !== sel && e.currentTarget.matches(":focus-visible")) jump(i, true);
                   }}
@@ -235,7 +199,7 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
                         s.solved ? { ["--tint" as string]: "var(--color-champagne)" } : undefined
                       }
                     >
-                      {s.solved ? "Tuntas" : "Siap"}
+                      {s.solved ? "Selesai" : "Belum"}
                     </span>
                   </div>
 
@@ -248,11 +212,10 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
                     {s.relation}
                   </p>
 
-                  {/* Besaran yang dinilai boleh tampil, angkanya tidak: target
-                      dibaca dari dalam ruangan, bukan dari layar pilih. */}
+
                   <dl className="mt-1 grid gap-1.5 border-t border-rule pt-3 font-mono text-[11px] tabular-nums text-ashdim">
                     <div className="flex justify-between gap-4">
-                      <dt>Toleransi</dt>
+                      <dt>Boleh meleset</dt>
                       <dd>
                         ± {s.tolerance} {s.unit}
                       </dd>
@@ -282,7 +245,7 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
                       style={{ color: on ? s.tint : undefined }}
                     >
                       <span className={on ? "" : "text-ashdim"}>
-                        {on ? "MASUK ▸" : "PUSATKAN"}
+                        {on ? "MAIN ▸" : "LIHAT"}
                       </span>
                     </span>
                   </div>
@@ -292,7 +255,7 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
           })}
         </ul>
 
-        {/* Panah tetap di tepi, untuk tetikus dan sentuh. */}
+
         {([-1, 1] as const).map((step) => (
           <button
             key={step}
@@ -308,9 +271,9 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
         ))}
       </div>
 
-      <p className="px-6 font-mono text-[11px] tracking-[0.18em] text-ashdim sm:px-10 lg:px-16">
-        ← → PILIH TAHAP · ENTER MASUK · KLIK KARTU UNTUK MENGGESER · {sel + 1} /{" "}
-        {stages.length}
+      <p className="px-6 text-[13px] text-ashdim sm:px-10 lg:px-16">
+        {touch ? "Geser kartunya, lalu ketuk untuk masuk" : "Pakai ← → lalu Enter, atau klik kartunya"} ·{" "}
+        {sel + 1} / {stages.length}
       </p>
     </div>
   );

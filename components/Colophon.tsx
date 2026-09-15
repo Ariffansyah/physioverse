@@ -1,7 +1,7 @@
 import Link from "next/link";
 import SoundToggle from "@/components/SoundToggle";
 
-/** Bilah status di kaki layar — bentuknya sama dengan baris kaki di menu utama. */
+
 export default function Colophon() {
   return (
     <footer className="relative z-2 border-t border-rule">
@@ -9,7 +9,9 @@ export default function Colophon() {
         <span>PHYSIOVERSE</span>
         <nav className="flex flex-wrap items-center gap-x-7 gap-y-1">
           {[
+            ["/belajar", "BELAJAR"],
             ["/play", "MISI"],
+            ["/tentang", "TENTANG"],
             ["/ketentuan", "KETENTUAN"],
             ["/privasi", "PRIVASI"],
           ].map(([href, label]) => (

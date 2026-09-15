@@ -1,15 +1,17 @@
-// node --test lib/physics.test.ts
+
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   apoapsis,
   circularSpeed,
+  dragForce,
   fringeSpacing,
   glbb,
   heightAtX,
   optics,
   orbitPeriod,
   projectile,
+  topSpeed,
 } from "./physics.ts";
 import { courtX, courtY } from "./levels.ts";
 
@@ -89,4 +91,21 @@ test("lintasan meninggalkan titik asal persis pada sudut bidiknya", () => {
 
 test("court: sumbu tegak dan mendatar memakai skala yang sama", () => {
   near(courtX(1) - courtX(0), courtY(1) - courtY(0));
+});
+
+test("gaya hambat tumbuh dengan kuadrat laju", () => {
+  const satu = dragForce(10, 0.32, 2.2);
+  const dua = dragForce(20, 0.32, 2.2);
+  assert.ok(Math.abs(dua / satu - 4) < 1e-9);
+  assert.ok(Math.abs(satu - 0.5 * 1.2 * 0.32 * 2.2 * 100) < 1e-9);
+});
+
+test("di laju maksimum dorongan mesin persis mengimbangi hambatan", () => {
+  const thrust = 480;
+  const v = topSpeed(thrust, 0.32, 2.2);
+  assert.ok(Math.abs(dragForce(v, 0.32, 2.2) - thrust) < 1e-9);
+});
+
+test("bodi yang lebih licin menaikkan laju maksimum", () => {
+  assert.ok(topSpeed(480, 0.24, 2.2) > topSpeed(480, 0.42, 2.2));
 });

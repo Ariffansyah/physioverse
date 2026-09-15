@@ -1,9 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  /* Langit malam yang sebenarnya bukan abu netral: indigo pekat dengan sisa
-     airglow. Aksen diambil dari garis emisi — OIII yang biru-hijau pucat,
-     Hα yang mawar berdebu, dan cahaya bintang yang hangat. */
+
+
   --color-obsidian: #080e1a;
   --color-well: #050a14;
   --color-graphite: #141e2e;
@@ -22,7 +21,7 @@
   --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   --ease-settle: cubic-bezier(0.16, 0.84, 0.28, 1);
-  /* Sedikit melewati tujuan lalu balik — gerak benda yang punya massa. */
+
   --ease-spring: cubic-bezier(0.22, 1.4, 0.36, 1);
 }
 
@@ -31,8 +30,8 @@ html {
 }
 
 body {
-  /* Dua kantong emisi yang diam, supaya bintang yang hanyut di atasnya punya
-     latar yang tidak ikut bergerak. */
+
+
   background:
     radial-gradient(
       1200px 680px at 76% 6%,
@@ -48,21 +47,13 @@ body {
   background-attachment: fixed;
   color: var(--color-starlight);
   font-family: var(--font-sans);
-  font-weight: 300;
-  line-height: 1.72;
+  font-weight: 400;
+  line-height: 1.68;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Medan bintang: dua lapisan noise yang di-ambang jadi titik — dekat & jarang,
-   jauh & rapat, hanyut ke arah berlawanan supaya terasa paralaks.
 
-   Digerakkan transform, bukan background-position. Pada 520px per 240 detik
-   lajunya cuma ~2 px/detik, dan background-position dilukis di piksel bulat —
-   jadi tiap bintang melompat satu piksel penuh tiap setengah detik. transform
-   diinterpolasi kompositor dengan presisi sub-piksel, jadi mulus. Tiap lapisan
-   digeser tepat satu ubin, dan kotaknya dilebihkan seukuran perjalanan itu
-   supaya tidak pernah ada tepi yang menganga. */
 @keyframes sail-near {
   to {
     transform: translate3d(520px, 520px, 0);
@@ -87,8 +78,7 @@ body::before {
   will-change: transform;
 }
 
-/* Lapisan bintang jauh. Arahnya berlawanan dengan yang dekat, jadi tidak bisa
-   ikut menumpang satu transform yang sama — ia butuh kotaknya sendiri. */
+
 .cosmos .sky {
   position: absolute;
   inset: -300px -300px 0 0;
@@ -109,10 +99,7 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ── Latar kosmik ──────────────────────────────────────────────────────────
-   Dipasang sekali di layout, jadi tiap halaman dapat langit yang sama.
-   Bintang hidup di body::before; di sini dua hal yang bukan bintang:
-   awan nebula dan pita galaksi. */
+
 .cosmos {
   position: fixed;
   inset: 0;
@@ -120,9 +107,7 @@ body::after {
   pointer-events: none;
 }
 
-/* Dua awan emisi, masing-masing dikurung topeng radial supaya jadi benda yang
-   punya tempat — bukan kabut rata selayar. Alpha di feColorMatrix dicuramkan
-   agar hanya bagian terpadat yang tampil dan sisanya tinggal rongga gelap. */
+
 .cosmos::before {
   content: "";
   position: absolute;
@@ -149,9 +134,7 @@ body::after {
   opacity: 0.62;
 }
 
-/* Pita galaksi: lapisan bintang yang jauh lebih rapat, dikurung ke satu jalur
-   miring. Kerapatan bintangnya yang bikin pita terbaca, bukan sapuan putih.
-   baseFrequency ditahan di .62 — mendekati Nyquist polanya jadi moaré. */
+
 .cosmos::after {
   content: "";
   position: absolute;
@@ -182,17 +165,16 @@ body::after {
     var(--color-graphite) 62%
   );
   border: 1px solid var(--color-rule);
-  border-radius: 0;
+  border-radius: 0.9rem;
 }
 
 @utility hud {
   background: var(--color-graphite);
   border: 1px solid var(--color-rule);
-  border-radius: 0;
+  border-radius: 0.9rem;
 }
 
-/* Baris yang tersentuh kebanjiran warna ruangannya sendiri. Dipakai bersama
-   `group` dan --tint yang dipasang di baris itu. */
+
 @utility flood {
   transition:
     background-color 0.4s var(--ease-settle),
@@ -215,9 +197,7 @@ body::after {
   );
 }
 
-/* Garis putus-putus di glyph selalu berarti lintasan. Saat kartunya disentuh,
-   lintasannya jalan: dash-nya bergeser satu periode penuh, jadi geraknya
-   mulus tanpa satu frame JavaScript. */
+
 @keyframes drift {
   to {
     stroke-dashoffset: -5;
@@ -227,8 +207,7 @@ body::after {
   animation: drift 0.55s linear infinite;
 }
 
-/* Kurung siku di dua sudut: kerangka HUD yang membingkai menu, bukan kotak
-   penuh yang menutup medan di belakangnya. */
+
 @utility bracket {
   position: relative;
 }
@@ -247,19 +226,17 @@ body::after {
   left: 0;
   border-right-width: 0;
   border-bottom-width: 0;
+  border-top-left-radius: 0.9rem;
 }
 .bracket::after {
   right: 0;
   bottom: 0;
   border-left-width: 0;
   border-top-width: 0;
+  border-bottom-right-radius: 0.9rem;
 }
 
-/* ── Perabot antarmuka permainan ──────────────────────────────────────────
-   Tiga bentuk yang dipakai berulang di semua halaman, supaya tombol di menu,
-   di konsol, dan di layar hasil terasa berasal dari mesin yang sama. */
 
-/* Tombol utama: pelat instrumen yang terangkat saat disentuh. */
 @utility btn {
   display: inline-flex;
   align-items: center;
@@ -273,7 +250,7 @@ body::after {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-ash);
-  border-radius: 2px;
+  border-radius: 0.7rem;
   transition: all 0.45s var(--ease-spring);
 }
 .btn:hover {
@@ -288,7 +265,7 @@ body::after {
   box-shadow: none;
 }
 
-/* Tombol yang membawa aksi utama layar: diisi penuh, bukan digariskan. */
+
 @utility btn-hot {
   border-color: var(--color-champagne);
   background: var(--color-champagne);
@@ -300,14 +277,14 @@ body::after {
   filter: brightness(1.08);
 }
 
-/* Lencana status: TUNTAS, SIAP, peringkat. Warnanya diambil dari --tint. */
+
 @utility chip {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   border: 1px solid
     color-mix(in oklab, var(--tint, var(--color-rule)) 55%, transparent);
-  border-radius: 2px;
+  border-radius: 999px;
   padding: 0.25rem 0.55rem;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
@@ -318,7 +295,7 @@ body::after {
   color: var(--tint, var(--color-ashdim));
 }
 
-/* Mistar XP bergraduasi — dipakai bilah kemajuan di beberapa layar. */
+
 @utility meter {
   position: relative;
   height: 1px;
@@ -331,6 +308,21 @@ body::after {
   background: var(--color-champagne);
   box-shadow: 0 0 10px var(--color-champagne);
   transition: width 1s var(--ease-spring);
+}
+
+
+@keyframes sweep {
+  from {
+    left: -38%;
+  }
+  to {
+    left: 100%;
+  }
+}
+.meter > i.sweep {
+  width: 38%;
+  transition: none;
+  animation: sweep 1.3s var(--ease-settle) infinite;
 }
 
 @utility tag {
@@ -346,7 +338,7 @@ body::after {
 @utility field {
   background: var(--color-well);
   border: 1px solid var(--color-rule);
-  border-radius: 2px;
+  border-radius: 0.6rem;
   transition: border-color 0.55s var(--ease-settle);
 }
 .field:focus {
@@ -358,7 +350,7 @@ h1,
 h2,
 h3 {
   font-family: var(--font-serif);
-  font-weight: 200;
+  font-weight: 400;
   text-wrap: balance;
   letter-spacing: -0.022em;
 }
@@ -366,8 +358,8 @@ h3 {
 input[type="number"] {
   min-width: 0;
 }
-/* outline :focus-visible ter-raster jadi kotak penuh di dalam panel CSS3D —
-   penanda fokusnya dipindah ke border pembungkus field. */
+
+
 input[type="number"]:focus-visible {
   outline: none;
 }
@@ -391,16 +383,14 @@ input[type="number"]:focus-visible {
   }
 }
 
-/* Judul besar mendapat halo tipis, bukan neon: cahaya yang bocor dari benda
-   terang di ruang gelap. */
+
 @utility halo {
   text-shadow:
     0 0 2.5rem rgb(99 201 214 / 0.26),
     0 0 6rem rgb(237 190 112 / 0.13);
 }
 
-/* Bagian yang naik dan menajam saat masuk layar. Timeline-nya digerakkan
-   guliran, bukan JavaScript — tanpa dukungan browser, isinya tampil apa adanya. */
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -419,7 +409,7 @@ input[type="number"]:focus-visible {
   }
 }
 
-/* Denyut untuk kerangka pemuatan: garis yang meredup, bukan balok abu berkilau. */
+
 @keyframes breathe {
   50% {
     opacity: 0.28;

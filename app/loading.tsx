@@ -1,10 +1,9 @@
 import Loading from "@/components/Loading";
 
-
-export default function PlayLoading() {
+export default function RootLoading() {
   return (
     <main className="grid min-h-svh">
-      <Loading label="Menyiapkan daftar misi" />
+      <Loading label="Menyalakan lab" />
     </main>
   );
 }
