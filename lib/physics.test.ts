@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   apoapsis,
+  arc,
   circularSpeed,
   dragForce,
   fringeSpacing,
@@ -124,4 +125,22 @@ test("wavelengthRgb: the band reads red at one end and blue at the other", () =>
   for (const nm of [400, 450, 500, 550, 600, 650, 700]) {
     for (const c of wavelengthRgb(nm)) assert.ok(c >= 0 && c <= 1, `${nm} nm out of gamut`);
   }
+});
+
+
+test("arc: lintasan mulai di titik lepas, berakhir di tanah, puncaknya cocok", () => {
+  const p = arc(20, 40);
+  assert.deepEqual(p[0], [0, 0]);
+  assert.equal(p.at(-1)![1], 0);
+
+  const { range, apex } = projectile(20, 40);
+  assert.ok(Math.abs(p.at(-1)![0] - range) < 0.05, `ujung ${p.at(-1)![0]} != ${range}`);
+  assert.ok(Math.abs(Math.max(...p.map((q) => q[1])) - apex) < 0.05);
+  for (const [, y] of p) assert.ok(y >= 0);
+
+  const high = arc(20, 40, 2);
+  assert.equal(high[0][1], 2);
+  assert.ok(high.at(-1)![0] > range);
+
+  assert.deepEqual(arc(0, 40), []);
 });

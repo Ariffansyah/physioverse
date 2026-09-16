@@ -1,10 +1,11 @@
 "use client";
 
+import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group, Mesh } from "three";
 import { BAY } from "@/lib/levels";
-import { GRAVITY, projectile } from "@/lib/physics";
+import { GRAVITY, arc, projectile } from "@/lib/physics";
 import { Dim } from "../Gauge";
 import { type Body, nudge, stepBody } from "@/lib/collide";
 import type { ChamberProps } from "../hall";
@@ -14,8 +15,21 @@ const PIVOT_Y = 0.35;
 const BARREL = 1.3;
 const MAX_RANGE = 64;
 
+type Pt = [number, number, number];
+
 export default function Ballistics({ level, params, runToken, onFinish, onInteract }: ChamberProps) {
   const { rad } = projectile(params.speed, params.angle);
+
+  const path = useMemo<Pt[]>(
+    () => arc(params.speed, params.angle).map(([x, y]) => [X0 + x * S, y * S + PIVOT_Y, 0]),
+    [params.speed, params.angle],
+  );
+  const [shot, setShot] = useState(runToken);
+  const [{ cur, prev }, setTrail] = useState<{ cur: Pt[]; prev: Pt[] }>({ cur: [], prev: [] });
+  if (shot !== runToken) {
+    setShot(runToken);
+    setTrail((t) => ({ cur: path, prev: t.cur }));
+  }
 
   const shell = useRef<Mesh>(null);
   const flash = useRef<Group>(null);
@@ -33,7 +47,6 @@ export default function Ballistics({ level, params, runToken, onFinish, onIntera
   useFrame(({ camera }, dt) => {
     if (flash.current) flash.current.visible = live.current && t.current < 0.12;
 
-    // setelah mendarat peluru jadi benda biasa: memantul, menggelinding, bisa ditendang
     if (body.current && shell.current) {
       nudge(body.current, camera.position);
       stepBody(body.current, dt, { scale: S, restitution: 0.4 });
@@ -164,6 +177,13 @@ export default function Ballistics({ level, params, runToken, onFinish, onIntera
           </mesh>
           <pointLight position={[0, 1.5, 0]} color="#7fa9c9" intensity={7} distance={11} />
         </group>
+      )}
+
+      {runToken > 0 && prev.length > 1 && (
+        <Line points={prev} color="#6b7681" lineWidth={1.5} transparent opacity={0.3} />
+      )}
+      {runToken > 0 && cur.length > 1 && (
+        <Line points={cur} color="#cbb08a" lineWidth={2.5} transparent opacity={0.7} />
       )}
 
       <mesh ref={shell} position={[X0, PIVOT_Y, 0]}>

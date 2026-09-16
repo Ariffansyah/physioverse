@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Colophon from "@/components/Colophon";
 import Notice from "@/components/Notice";
 import SpaceStage from "@/components/SpaceStage";
@@ -102,6 +103,26 @@ export default async function ChamberSelect() {
               ))}
             </dl>
           </div>
+
+          {best.size === LEVELS.length && (
+            <div className="px-6 sm:px-10 lg:px-16">
+              <Link
+                href="/latihan"
+                className="hud flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 border border-rule p-5 transition-colors duration-500 ease-settle hover:border-champagne"
+              >
+                <span className="grid gap-2">
+                  <span className="tag text-champagne">Misi bonus terbuka</span>
+                  <span className="text-[15px] leading-relaxed text-ash">
+                    Dua puluh satu misi habis. Yang tersisa soal yang dibangkitkan sendiri:
+                    ruangnya diundi, angkanya diacak, jadi tidak ada lagi yang bisa dihafal.
+                  </span>
+                </span>
+                <span className="font-mono text-[12px] tracking-[0.18em] uppercase text-champagne">
+                  Mulai →
+                </span>
+              </Link>
+            </div>
+          )}
 
           <StageSelect stages={stages} />
         </main>

@@ -551,6 +551,31 @@ export function sanitizeParams(level: Level, raw: unknown): Record<string, numbe
   return params;
 }
 
+export const closest = (level: Level, attempts: number[]) =>
+  attempts.reduce(
+    (best, v, i) =>
+      Math.abs(v - level.goal.target) < Math.abs(attempts[best]! - level.goal.target) ? i : best,
+    attempts.length > 0 ? 0 : -1,
+  );
+
+export type Sense = { key: string; label: string; unit: string; step: number; per: number };
+
+export function sensitivity(level: Level, params: Record<string, number>): Sense[] {
+  if (!Number.isFinite(level.solve(params))) return [];
+  const senses: Sense[] = [];
+  for (const c of level.controls) {
+    const at = params[c.key] ?? level.defaults[c.key] ?? c.min;
+    const [lo, hi] = at + c.step <= c.max ? [at, at + c.step] : [Math.max(at - c.step, c.min), at];
+    if (hi === lo) continue;
+    const per =
+      ((level.solve({ ...params, [c.key]: hi }) - level.solve({ ...params, [c.key]: lo })) *
+        c.step) /
+      (hi - lo);
+    if (Number.isFinite(per)) senses.push({ key: c.key, label: c.label, unit: c.unit, step: c.step, per });
+  }
+  return senses.sort((a, b) => Math.abs(b.per) - Math.abs(a.per));
+}
+
 export const RANKS = [
   { at: 0, title: "Cadet" },
   { at: 650, title: "Field Technician" },

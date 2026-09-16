@@ -21,6 +21,25 @@ export function projectile(speed: number, angleDeg: number, g = GRAVITY) {
 }
 
 
+export function arc(
+  speed: number,
+  angleDeg: number,
+  h0 = 0,
+  steps = 48,
+  g = GRAVITY,
+): [number, number][] {
+  const rad = (angleDeg * Math.PI) / 180;
+  const vx = speed * Math.cos(rad);
+  const vy = speed * Math.sin(rad);
+  const flight = (vy + Math.sqrt(Math.max(vy ** 2 + 2 * g * h0, 0))) / g;
+  if (!Number.isFinite(flight) || flight <= 0) return [];
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const t = (flight * i) / steps;
+    return [vx * t, Math.max(h0 + vy * t - 0.5 * g * t ** 2, 0)] as [number, number];
+  });
+}
+
+
 export function glbb(v0: number, accel: number, distance: number) {
   const finalV = Math.sqrt(v0 ** 2 + 2 * accel * distance);
   const duration = accel > 0 ? (finalV - v0) / accel : v0 > 0 ? distance / v0 : Infinity;
@@ -88,7 +107,6 @@ export const topSpeed = (thrust: number, cd: number, area: number, rho = AIR) =>
   Math.sqrt((2 * thrust) / (rho * cd * area));
 
 
-// CIE-ish piecewise fit (Bruton). Returns sRGB 0..1; black outside the visible band.
 export function wavelengthRgb(nm: number): [number, number, number] {
   if (nm < 380 || nm > 780) return [0, 0, 0];
 
@@ -115,7 +133,6 @@ export function wavelengthRgb(nm: number): [number, number, number] {
     r = 1;
   }
 
-  // the eye rolls off at both ends of the band
   const fade =
     nm < 420 ? 0.3 + (0.7 * (nm - 380)) / 40 : nm > 700 ? 0.3 + (0.7 * (780 - nm)) / 80 : 1;
 

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { LEVELS, isSolved, sanitizeParams, type Level } from "./levels.ts";
+import { LEVELS, closest, isSolved, sanitizeParams, sensitivity, type Level } from "./levels.ts";
+import { canPractice, practiceLevel } from "./practice.ts";
 
 function* grid(level: Level): Generator<Record<string, number>> {
   const ctrls = level.controls;
@@ -66,4 +67,88 @@ test("sanitizeParams jatuh ke default kalau bukan angka", () => {
     level.defaults.angle,
   );
   assert.deepEqual(sanitizeParams(level, null), level.defaults);
+});
+
+
+for (const level of LEVELS) {
+  test(`${level.id} sensitivity menunjuk arah yang benar dari default`, () => {
+    const senses = sensitivity(level, level.defaults);
+    assert.equal(senses.length, level.controls.length);
+
+    const base = level.solve(level.defaults);
+    const need = level.goal.target - base;
+    const top = senses[0]!;
+    assert.ok(Math.abs(top.per) > 0, `${top.key} tidak berpengaruh sama sekali`);
+
+    const c = level.controls.find((x) => x.key === top.key)!;
+    const dir = top.per * need > 0 ? 1 : -1;
+    const moved = Math.min(c.max, Math.max(c.min, level.defaults[top.key] + dir * c.step));
+    if (moved !== level.defaults[top.key]) {
+      const after = level.solve({ ...level.defaults, [top.key]: moved });
+      assert.ok(
+        Math.abs(level.goal.target - after) < Math.abs(need),
+        `${level.id}: ${top.key} ke ${moved} malah menjauh (${base} -> ${after})`,
+      );
+    }
+  });
+}
+
+
+test("closest menunjuk percobaan terdekat, termasuk kalau targetnya negatif", () => {
+  const bay = LEVELS.find((l) => l.id === "bay-01")!;
+  assert.equal(closest(bay, [18.2, 22.4, 19.9]), 2);
+  assert.equal(closest(bay, [19.9, 22.4, 18.2]), 0);
+  assert.equal(closest(bay, [25]), 0);
+  assert.equal(closest(bay, []), -1);
+
+  const hall = LEVELS.find((l) => l.id === "hall-02")!;
+  assert.equal(hall.goal.target < 0, true);
+  assert.equal(closest(hall, [-1.2, -2.1, -3.4]), 1);
+
+  assert.equal(closest(bay, [Infinity, 21]), 1);
+});
+
+
+for (const level of LEVELS) {
+  test(`${level.id} latihan: targetnya beda, tetap bisa diselesaikan`, () => {
+    if (!canPractice(level)) {
+      assert.equal(practiceLevel(level, 1), null, `${level.id} seharusnya ditolak`);
+      return;
+    }
+
+    for (const seed of [1, 7, 4242]) {
+      const p = practiceLevel(level, seed)!;
+      assert.ok(p, `${level.id} seed ${seed} tidak menghasilkan apa-apa`);
+
+      const t = p.goal.target;
+      assert.notEqual(t, level.goal.target, "targetnya sama dengan aslinya");
+      assert.ok(
+        Math.abs(t / level.gauge.tick - Math.round(t / level.gauge.tick)) < 1e-6,
+        `${t} bukan kelipatan ${level.gauge.tick}, tiang penandanya jadi bohong`,
+      );
+      assert.equal(p.xp, 0, "latihan tidak boleh memberi XP");
+      assert.equal(p.marker === undefined, level.marker === undefined);
+      if (p.marker !== undefined) assert.equal(p.marker, t, "penanda tidak ikut pindah");
+
+      assert.ok(p.clue.given.at(-1)!.includes(String(t)));
+      assert.equal(p.clue.relation, level.clue.relation);
+
+      assert.equal(isSolved(p, p.solve(p.defaults)), false, "lolos cuma dengan default");
+      let ok = false;
+      for (const params of grid(p)) {
+        if (isSolved(p, p.solve(params))) {
+          ok = true;
+          break;
+        }
+      }
+      assert.ok(ok, `${level.id} seed ${seed}: target ${t} tidak terjangkau slider`);
+    }
+  });
+}
+
+test("seed yang sama memberi misi latihan yang sama", () => {
+  const bay = LEVELS.find((l) => l.id === "bay-01")!;
+  assert.equal(practiceLevel(bay, 99)!.goal.target, practiceLevel(bay, 99)!.goal.target);
+  const targets = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((n) => practiceLevel(bay, n)!.goal.target));
+  assert.ok(targets.size > 1, "delapan seed memberi target yang itu-itu saja");
 });

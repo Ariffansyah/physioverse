@@ -1,10 +1,11 @@
 "use client";
 
+import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Mesh } from "three";
 import { COURT, courtX, courtY } from "@/lib/levels";
-import { GRAVITY } from "@/lib/physics";
+import { GRAVITY, arc } from "@/lib/physics";
 import { Dim } from "../Gauge";
 import { type Body, box, nudge, stepBody, touches } from "@/lib/collide";
 import type { ChamberProps } from "../hall";
@@ -21,6 +22,8 @@ const SEAMS = [
   [Math.PI / 2, 0, 0],
 ] as const;
 
+type Pt = [number, number, number];
+
 export default function Court({ level, params, runToken, onFinish, onInteract }: ChamberProps) {
   const releaseH = (params.h0 as number) ?? defaultReleaseH;
   const hoopDist = level.marker ?? 8;
@@ -35,8 +38,18 @@ export default function Court({ level, params, runToken, onFinish, onInteract }:
   const live = useRef(false);
   const body = useRef<Body | null>(null);
 
+  const path = useMemo<Pt[]>(
+    () => arc(params.speed, params.angle, releaseH).map(([x, y]) => [courtX(x), courtY(y), 0]),
+    [params.speed, params.angle, releaseH],
+  );
+  const [shot, setShot] = useState(runToken);
+  const [{ cur, prev }, setTrail] = useState<{ cur: Pt[]; prev: Pt[] }>({ cur: [], prev: [] });
+  if (shot !== runToken) {
+    setShot(runToken);
+    setTrail((t) => ({ cur: path, prev: t.cur }));
+  }
+
   const hoopY = hoopH * M + 0.08;
-  // papan pantul + dua sisi ring: yang bikin lemparan meleset berbunyi clank
   const rig = useMemo(
     () => [
       box(hoopX + 0.35, hoopY + 0.55, 0, 0.04, 0.55, 0.8),
@@ -76,7 +89,6 @@ export default function Court({ level, params, runToken, onFinish, onInteract }:
     ball.current.position.set(courtX(x), courtY(y), 0);
     ball.current.rotation.z += dt * 7;
 
-    // kena ring atau papan: fisika ambil alih tampilannya, skor tetap dari solve()
     if (touches(courtX(x), courtY(y), 0, BALL_R, rig)) {
       body.current = {
         p: { x: courtX(x), y: courtY(y), z: 0 },
@@ -229,6 +241,13 @@ export default function Court({ level, params, runToken, onFinish, onInteract }:
           </mesh>
         </group>
       </group>
+
+      {runToken > 0 && prev.length > 1 && (
+        <Line points={prev} color="#6b7681" lineWidth={1.5} transparent opacity={0.3} />
+      )}
+      {runToken > 0 && cur.length > 1 && (
+        <Line points={cur} color="#e8a04a" lineWidth={2.5} transparent opacity={0.7} />
+      )}
 
       <mesh ref={ball} position={[releaseX, courtY(releaseH), 0]}>
         <sphereGeometry args={[BALL_R, 32, 32]} />

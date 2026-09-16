@@ -1,19 +1,36 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { finishRun } from "@/app/play/actions";
 import Loading from "@/components/Loading";
 import { LESSONS } from "@/lib/lesson";
 import { CHAMBERS, LEVELS, getLevel, isSolved } from "@/lib/levels";
+import { practiceLevel } from "@/lib/practice";
 import { useTouch } from "@/lib/touch";
 import { Briefing, ClueCard, Crosshair, ExitButton, ObjectiveCard, ResultCard, TweakPanel } from "./Hud";
 import type { Lockable } from "./hall";
 
 const World = dynamic(() => import("./World"), { ssr: false });
 
-export default function Game({ levelId }: { levelId: string }) {
-  const level = getLevel(levelId)!;
+export default function Game({
+  levelId,
+  practice = false,
+  rooms,
+}: {
+  levelId: string;
+  practice?: boolean;
+  rooms?: string[];
+}) {
+  const [roomId] = useState(() =>
+    rooms && rooms.length > 0 ? rooms[Math.floor(Math.random() * rooms.length)]! : levelId,
+  );
+  const base = getLevel(roomId)!;
+  const [seed, setSeed] = useState(() => Date.now());
+  const level = useMemo(
+    () => (practice ? (practiceLevel(base, seed) ?? base) : base),
+    [practice, base, seed],
+  );
 
 
   const touch = useTouch();
@@ -28,6 +45,7 @@ export default function Game({ levelId }: { levelId: string }) {
   const [running, setRunning] = useState(false);
   const [runToken, setRunToken] = useState(0);
   const [result, setResult] = useState<{ value: number; solved: boolean; elapsed: string } | null>(null);
+  const [attempts, setAttempts] = useState<number[]>([]);
   const [saveError, setSaveError] = useState<string>();
   const [startedAt, setStartedAt] = useState(0);
   const [, record] = useTransition();
@@ -91,8 +109,10 @@ export default function Game({ levelId }: { levelId: string }) {
     (value: number) => {
       const ms = performance.now() - startedAt;
       setRunning(false);
+      setAttempts((a) => [...a, value]);
       setResult({ value, solved: isSolved(level, value), elapsed: `${(ms / 1000).toFixed(1)}s` });
       controls.current?.unlock();
+      if (practice) return;
       record(async () => {
         try {
           await finishRun(level.id, params, ms);
@@ -101,7 +121,7 @@ export default function Game({ levelId }: { levelId: string }) {
         }
       });
     },
-    [level, params, startedAt],
+    [level, params, startedAt, practice],
   );
 
   const retry = () => {
@@ -111,9 +131,17 @@ export default function Game({ levelId }: { levelId: string }) {
     setTimeout(() => controls.current?.lock(), 60);
   };
 
+  const shuffle = () => {
+    setSeed(Date.now());
+    setParams({ ...base.defaults });
+    setAttempts([]);
+    retry();
+  };
+
   const panelProps = {
     level,
     params,
+    attempts,
     onChange: (key: string, v: number) => setParams((p) => ({ ...p, [key]: v })),
     onRun: run,
     onClose: closeDock,
@@ -179,12 +207,15 @@ export default function Game({ levelId }: { levelId: string }) {
       {result && (
         <ResultCard
           level={level}
+          params={params}
+          attempts={attempts}
           value={result.value}
           solved={result.solved}
           elapsed={result.elapsed}
           nextId={nextId}
           saveError={saveError}
           onRetry={retry}
+          onShuffle={practice ? shuffle : undefined}
         />
       )}
 

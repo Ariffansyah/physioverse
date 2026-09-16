@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CHAMBERS, type Level } from "@/lib/levels";
+import { LESSONS } from "@/lib/lesson";
+import { CHAMBERS, type Level, closest, isSolved, sensitivity } from "@/lib/levels";
 import { play } from "@/lib/sfx";
 import { useTouch } from "@/lib/touch";
 
@@ -224,25 +225,79 @@ export function Resume({ onResume }: { onResume: () => void }) {
   );
 }
 
+export function Attempts({ level, attempts }: { level: Level; attempts: number[] }) {
+  if (attempts.length === 0) return null;
+  const off = (v: number) => v - level.goal.target;
+  const best = closest(level, attempts);
+  const shown = attempts.slice(-5);
+  const from = attempts.length - shown.length;
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="tag text-ashdim">Percobaan</p>
+        <p className="font-mono text-[11px] tabular-nums text-ashdim">
+          target {level.goal.target} {level.goal.unit}
+        </p>
+      </div>
+      <ul className="mt-2.5 grid gap-1.5 font-mono text-[11px] tabular-nums sm:text-xs">
+        {shown.map((v, i) => {
+          const n = from + i;
+          const d = off(v);
+          return (
+            <li key={n} className="grid grid-cols-[1.25rem_1fr_4.5rem_5rem] items-baseline gap-2">
+              <span className="text-ashdim">{n + 1}</span>
+              <span className="text-right text-ash">
+                {fmt(v)} {level.goal.unit}
+              </span>
+              <span className={`text-right ${isSolved(level, v) ? "text-champagne" : "text-oxide"}`}>
+                {d >= 0 ? "+" : "−"}
+                {fmt(Math.abs(d))}
+              </span>
+              <span className="text-champagne">
+                {attempts.length > 1 && n === best ? "← terdekat" : ""}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {from > 0 && (
+        <p className="mt-2 font-mono text-[10px] text-ashdim">
+          {from} percobaan sebelumnya tidak ditampilkan
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function ResultCard({
   level,
+  params,
+  attempts,
   value,
   solved,
   elapsed,
   nextId,
   saveError,
   onRetry,
+  onShuffle,
 }: {
   level: Level;
+  params: Record<string, number>;
+  attempts: number[];
   value: number;
   solved: boolean;
   elapsed: string;
   nextId?: string;
   saveError?: string;
   onRetry: () => void;
+  onShuffle?: () => void;
 }) {
   const off = Math.abs(value - level.goal.target);
   const tone = solved ? "text-champagne" : "text-oxide";
+  const need = level.goal.target - value;
+  const senses = solved || !Number.isFinite(value) ? [] : sensitivity(level, params);
+  const misses = attempts.filter((v) => !isSolved(level, v)).length;
+  const lesson = LESSONS[level.chamber];
 
 
   useEffect(() => {
@@ -270,13 +325,68 @@ export function ResultCard({
         </dl>
         {solved ? (
           <p className="mt-5 text-sm text-ash">
-            Bagus. <span className="text-champagne">+{level.xp} XP</span>
+            Bagus.{" "}
+            {level.xp > 0 ? (
+              <span className="text-champagne">+{level.xp} XP</span>
+            ) : (
+              <span className="text-ashdim">Misi bonus tidak dicatat dan tidak memberi XP.</span>
+            )}
           </p>
         ) : (
           <p className="mt-5 max-w-[46ch] text-sm leading-relaxed text-ash">
-            Hitung ulang dari rumus, ubah angkanya, lalu kirim lagi.
+            {need > 0 ? "Hasilmu kurang" : "Hasilmu kelebihan"} {fmt(Math.abs(need))}{" "}
+            {level.goal.unit}. Hitung ulang dari rumus, lalu sesuaikan.
           </p>
         )}
+
+        {!solved && misses >= 2 && (
+          <Link
+            href={`/belajar/${level.chamber}`}
+            className="mt-6 block border-l-2 border-quantum pl-4 transition-colors duration-300 ease-settle hover:border-champagne"
+          >
+            <p className="tag text-ashdim">Masih meleset?</p>
+            <p className="mt-2 max-w-[46ch] text-sm leading-relaxed text-ash">
+              Buka mode belajar <span className="text-quantum">{lesson.title}</span> — rumusnya
+              dikerjakan langkah per langkah sambil slidernya digeser, tanpa dinilai.
+            </p>
+          </Link>
+        )}
+
+        {senses.length > 0 && (
+          <div className="mt-6 border-t border-rule pt-4">
+            <p className="tag text-ashdim">Pengaruh satu langkah slider</p>
+            <ul className="mt-3 grid gap-2 font-mono text-[11px] tabular-nums sm:text-xs">
+              {senses.map((s) => {
+                const dead = Math.abs(s.per) < level.goal.tolerance / 50;
+                const up = s.per * need > 0;
+                return (
+                  <li key={s.key} className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 truncate text-ashdim">{s.label}</span>
+                    <span className="shrink-0 text-ash">
+                      +{s.step} {s.unit}
+                      <span className="mx-1.5 text-ashdim" aria-hidden="true">
+                        →
+                      </span>
+                      <span className="text-starlight">
+                        {s.per >= 0 ? "+" : "−"}
+                        {fmt(Math.abs(s.per))} {level.goal.unit}
+                      </span>
+                      <span className={`ml-2 ${dead ? "text-ashdim" : "text-champagne"}`}>
+                        {dead ? "—" : up ? "↑ naikkan" : "↓ turunkan"}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+        {attempts.length > 1 && (
+          <div className="mt-6 border-t border-rule pt-4">
+            <Attempts level={level} attempts={attempts} />
+          </div>
+        )}
+
         {saveError && <p className="mt-4 border-l border-oxide pl-4 text-xs text-oxide">Gagal simpan: {saveError}</p>}
         <div className="mt-8 grid gap-3 sm:grid-cols-2 sm:gap-4">
           <button
@@ -289,13 +399,32 @@ export function ResultCard({
           >
             Coba lagi
           </button>
-          <Link
-            href={solved && nextId ? `/play/${nextId}` : "/play"}
-            className="btn btn-hot"
-          >
-            {solved && nextId ? "Misi berikutnya" : "Daftar misi"}
-          </Link>
+          {onShuffle ? (
+            <button
+              type="button"
+              onClick={() => {
+                play("select");
+                onShuffle();
+              }}
+              className="btn btn-hot"
+            >
+              Angka lain
+            </button>
+          ) : (
+            <Link href={solved && nextId ? `/play/${nextId}` : "/play"} className="btn btn-hot">
+              {solved && nextId ? "Misi berikutnya" : "Daftar misi"}
+            </Link>
+          )}
         </div>
+
+        {onShuffle && (
+          <Link
+            href="/play"
+            className="mt-5 block text-center text-[13px] text-ashdim transition-colors duration-300 ease-settle hover:text-champagne"
+          >
+            Sudah cukup, kembali ke daftar misi
+          </Link>
+        )}
       </div>
     </Overlay>
   );
@@ -407,10 +536,10 @@ function Step({
   );
 }
 
-/** Panel setelan alat. Tampilan sama di HP dan di panel VR desktop; `vr` cuma mengunci lebarnya. */
 export function TweakPanel({
   level,
   params,
+  attempts,
   onChange,
   onRun,
   onClose,
@@ -418,6 +547,7 @@ export function TweakPanel({
 }: {
   level: Level;
   params: Record<string, number>;
+  attempts: number[];
   onChange: (key: string, v: number) => void;
   onRun: () => void;
   onClose: () => void;
@@ -467,6 +597,11 @@ export function TweakPanel({
       </div>
 
       <div className="grid gap-5 overflow-y-auto p-4 sm:p-5">
+        {attempts.length > 0 && (
+          <div className="border-b border-rule pb-5">
+            <Attempts level={level} attempts={attempts} />
+          </div>
+        )}
         {level.controls.map((c) => (
           <NumberField
             key={c.key}
