@@ -4,6 +4,8 @@ A first-person physics game for high school students. You walk into a test
 facility, read the brief, work the numbers out yourself, dial them into the
 console, and watch the room prove you right or wrong.
 
+**Live demo: <https://physioverse.arpthef.my.id/>**
+
 Next.js 16 (App Router), Tailwind v4, Supabase, React Three Fiber.
 Licensed under the [MIT License](LICENSE).
 
