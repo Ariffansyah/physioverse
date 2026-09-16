@@ -21,7 +21,7 @@ export default async function LoginPage({
         {banned && (
           <p className="w-full max-w-sm border-l border-oxide pl-4 text-sm leading-relaxed text-oxide">
             Akun ini dibekukan oleh pengelola, jadi misinya tidak bisa dibuka.
-            Kalau menurutmu ini keliru, hubungi kontak di halaman Privasi.
+            Kalau menurutmu ini keliru, kirim keberatan ke arppwork@gmail.com.
           </p>
         )}
         <LoginForm />

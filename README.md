@@ -16,6 +16,28 @@ Licensed under the [MIT License](LICENSE).
 | ![Inside a chamber](docs/mission.png) | ![Learning mode](docs/learn.png) |
 | **Inside a chamber.** Walk to the bench, press `E`, and the console opens where you stand. | **Learning mode.** Drag a knob, the simulation reruns, and the working is written out line by line beside it. |
 
+## Sub-theme: Education
+
+Physics at high school is taught as formulas on a whiteboard. Students memorise
+`R = v² sin(2θ) / g` without ever seeing what the formula does when you change a
+number in it, so the symbols stay abstract and the intuition never arrives.
+
+PhysioVerse attacks that gap from two directions.
+
+* **Learning mode** gives the formula a body. Drag the launch angle and the
+  trajectory redraws while the arithmetic rewrites itself line by line using the
+  number you just picked. The question "why is 45 degrees always the farthest"
+  gets answered by moving a slider, not by reading a paragraph.
+* **Mission mode** turns it around. The instruments and the formula are given,
+  the numbers are not. You calculate, you commit to an answer, and the room runs
+  the experiment to see whether the world agrees with you.
+
+The topics follow the SMA syllabus: projectile motion, uniformly accelerated
+motion, thin lenses, air resistance, double-slit interference, and orbits. Every
+mission is scored by simulating what you asked for rather than by matching a
+stored answer key, which is why the same engine can host a mission and a lesson
+without either one being a quiz.
+
 ## Two roles
 
 The site is open to the public, so anyone can sign up. That leaves exactly two
@@ -173,8 +195,18 @@ what freezing an account does.
   `leaderboard` view leaves it out.
 * Every server page calls `requireUser()` or `requireAdmin()`. No protected page
   decides a role in the browser.
-* Account deletion: ask through the contact on the privacy page. `on delete
-  cascade` takes every attempt with it.
+* Account deletion: write to arppwork@gmail.com from the address you signed up
+  with. `on delete cascade` takes every attempt with it.
+
+Both guards were checked against the live database rather than assumed. Patching
+`role` through the REST API returns 403 because the column is not granted, and
+patching `banned` is rejected by the trigger.
+
+## Contact
+
+arppwork@gmail.com, for data deletion requests, abuse reports, and appeals
+against an operator decision. The same address appears in the site footer, on the
+terms and privacy pages, and on the screen a frozen account lands on.
 
 ## Tools
 

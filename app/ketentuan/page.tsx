@@ -47,6 +47,7 @@ export default function Ketentuan() {
           body: [
             "Seluruh kode situs ini terbuka di bawah Lisensi MIT. Kamu boleh membacanya, menyalinnya, mengubahnya, dan memakainya di kelasmu sendiri, asal pemberitahuan hak cipta dan teks lisensinya ikut dibawa.",
             "Lisensi itu menyangkut kodenya. Akun, catatan percobaan, dan papan rekor tetap milik pemainnya masing-masing dan tidak ikut dilisensikan.",
+            "Pertanyaan soal ketentuan ini, laporan penyalahgunaan, dan keberatan atas tindakan pengelola dikirim ke arppwork@gmail.com.",
           ],
         },
         {

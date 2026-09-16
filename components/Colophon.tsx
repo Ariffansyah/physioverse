@@ -14,6 +14,7 @@ export default function Colophon() {
             ["/tentang", "TENTANG"],
             ["/ketentuan", "KETENTUAN"],
             ["/privasi", "PRIVASI"],
+            ["mailto:arppwork@gmail.com", "KONTAK"],
           ].map(([href, label]) => (
             <Link
               key={href}

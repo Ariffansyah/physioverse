@@ -44,12 +44,13 @@ export default function Privasi() {
           body: [
             "Pengelola bisa membekukan akun yang melanggar ketentuan. Akun beku tidak bisa membuka misi dan tidak muncul di papan rekor, tapi datanya tidak dihapus — kalau pembekuannya keliru, semuanya kembali utuh.",
             "Nama panggilan yang kasar bisa diganti dengan nama netral. Yang berubah cuma namanya; catatan percobaan dan XP-mu tetap.",
+            "Keberatan atas pembekuan atau penggantian nama dikirim ke arppwork@gmail.com, alamat yang sama untuk semua urusan data di halaman ini.",
           ],
         },
         {
           head: "Menghapus data",
           body: [
-            "Minta lewat kontak yang tercantum dan seluruh isinya dihapus: akun, nama panggilan, dan semua catatan percobaan. Tidak ada arsip yang disimpan setelah itu.",
+            "Kirim permintaan ke arppwork@gmail.com dari alamat email yang kamu pakai mendaftar, dan seluruh isinya dihapus: akun, nama panggilan, dan semua catatan percobaan. Tidak ada arsip yang disimpan setelah itu.",
             "Menghapus akun juga menghapus barisnya di papan rekor, jadi rekor yang kamu pegang akan berpindah ke pemain berikutnya.",
           ],
         },
