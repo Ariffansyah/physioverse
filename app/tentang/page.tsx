@@ -2,7 +2,7 @@ import LegalPage from "@/components/LegalPage";
 import { CHAMBERS, LEVELS } from "@/lib/levels";
 
 export const metadata = {
-  title: "Tentang PhysioVerse",
+  title: "Tentang",
   description:
     "Laboratorium fisika 3D untuk anak SMA: belajar lewat simulasi yang bisa diatur, lalu uji hitunganmu sendiri lewat misi.",
 };

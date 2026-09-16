@@ -3,6 +3,8 @@ import SoundToggle from "@/components/SoundToggle";
 import SpaceStage from "@/components/SpaceStage";
 import LoginForm from "./LoginForm";
 
+export const metadata = { title: "Masuk" };
+
 export default async function LoginPage({
   searchParams,
 }: {

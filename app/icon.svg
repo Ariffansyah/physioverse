@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PhysioVerse">
+  <defs>
+    <clipPath id="frame"><rect width="32" height="32" rx="7"/></clipPath>
+    <clipPath id="front"><rect x="0" y="16.4" width="32" height="16"/></clipPath>
+    <linearGradient id="globe" x1="0.25" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#7ad6e0"/>
+      <stop offset="0.55" stop-color="#3d8ba1"/>
+      <stop offset="1" stop-color="#245a6d"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="32" height="32" fill="#080e1a"/>
+    <g transform="rotate(-21 16 16.4)">
+      <ellipse cx="16" cy="16.4" rx="14.2" ry="4.9" fill="none" stroke="#edbe70" stroke-width="1.7"/>
+    </g>
+    <circle cx="16" cy="16.4" r="8.2" fill="url(#globe)"/>
+    <g clip-path="url(#front)">
+      <g transform="rotate(-21 16 16.4)">
+        <ellipse cx="16" cy="16.4" rx="14.2" ry="4.9" fill="none" stroke="#edbe70" stroke-width="1.7"/>
+      </g>
+    </g>
+  </g>
+</svg>

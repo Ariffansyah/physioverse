@@ -6,6 +6,8 @@ import TopBar from "@/components/TopBar";
 import { requireUser } from "@/lib/auth";
 import { CHAMBERS, LEVELS, rankFor } from "@/lib/levels";
 
+export const metadata = { title: "Pilih misi" };
+
 type Run = { level_id: string; elapsed_ms: number };
 type Holder = { level_id: string; username: string; elapsed_ms: number };
 

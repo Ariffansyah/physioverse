@@ -7,6 +7,12 @@ export function generateStaticParams() {
   return Object.keys(LESSONS).map((chamber) => ({ chamber }));
 }
 
+export async function generateMetadata(props: PageProps<"/belajar/[chamber]">) {
+  const { chamber } = await props.params;
+  const lesson = LESSONS[chamber as ChamberKey];
+  return lesson ? { title: lesson.title, description: lesson.intro } : {};
+}
+
 export default async function LearnRoom(props: PageProps<"/belajar/[chamber]">) {
   const { chamber } = await props.params;
   if (!(chamber in LESSONS)) notFound();

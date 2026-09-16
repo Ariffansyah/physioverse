@@ -103,6 +103,7 @@ Two variables, both from Supabase under Project Settings, API. See `.env.example
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL, `https://xxxx.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The `anon public` or `publishable` key |
+| `NEXT_PUBLIC_SITE_URL` | Optional. Absolute base for Open Graph tags, needed only on a custom domain. Vercel fills `VERCEL_URL` in by itself. |
 
 Both are meant to be public. What protects the data is RLS, not the secrecy of
 the key. The `service_role` key is not used anywhere and does not belong in this

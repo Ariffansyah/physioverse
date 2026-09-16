@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { CHAMBERS, LEVELS, rankFor } from "@/lib/levels";
 import { deleteRun, maskCallsign, setBan, setNotice } from "./actions";
 
-export const metadata = { title: "Konsol Pengelola · PhysioVerse" };
+export const metadata = { title: "Konsol Pengelola" };
 
 type Run = {
   id: string;

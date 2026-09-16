@@ -5,6 +5,7 @@ import SpaceStage from "@/components/SpaceStage";
 import { CHAMBERS, LEVELS, type ChamberKey } from "@/lib/levels";
 import { LESSONS } from "@/lib/lesson";
 
+export const metadata = { title: "Mode belajar" };
 
 export default function LearnIndex() {
   const rooms = Object.keys(LESSONS) as ChamberKey[];

@@ -21,10 +21,35 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
+/** Dipakai untuk URL absolut di tag Open Graph. Vercel mengisi VERCEL_URL
+    sendiri; set NEXT_PUBLIC_SITE_URL kalau memakai domain sendiri. */
+const site =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+const description =
+  "Laboratorium fisika 3D untuk anak SMA. Geser instrumennya di mode belajar, " +
+  "lalu uji hitunganmu sendiri lewat 21 misi di 7 ruang uji.";
+
 export const metadata: Metadata = {
-  title: "PhysioVerse: Into the Physics Verse",
-  description:
-    "Laboratorium fisika orang pertama. Atur instrumennya, hitung sendiri jawabannya, lalu lihat apakah alam sepakat.",
+  metadataBase: new URL(site),
+  title: {
+    default: "PhysioVerse: Into the Physics Verse",
+    template: "%s · PhysioVerse",
+  },
+  description,
+  applicationName: "PhysioVerse",
+  authors: [{ name: "Ariffansyah" }, { name: "Nailah Kusnadi" }],
+  category: "education",
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: "PhysioVerse",
+    title: "PhysioVerse: Into the Physics Verse",
+    description,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 
