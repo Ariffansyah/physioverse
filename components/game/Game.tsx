@@ -10,14 +10,7 @@ import { useTouch } from "@/lib/touch";
 import { Briefing, ClueCard, Crosshair, ExitButton, ObjectiveCard, ResultCard, TweakPanel } from "./Hud";
 import type { Lockable } from "./hall";
 
-const World = dynamic(() => import("./World"), {
-  ssr: false,
-  loading: () => (
-    <div className="size-full bg-well">
-      <Loading label="Mengkalibrasi ruang uji" />
-    </div>
-  ),
-});
+const World = dynamic(() => import("./World"), { ssr: false });
 
 export default function Game({ levelId }: { levelId: string }) {
   const level = getLevel(levelId)!;
@@ -29,6 +22,7 @@ export default function Game({ levelId }: { levelId: string }) {
   const tint = CHAMBERS[level.chamber].tint;
 
   const [params, setParams] = useState<Record<string, number>>(() => ({ ...level.defaults }));
+  const [ready, setReady] = useState(false);
   const [locked, setLocked] = useState(false);
   const [dockOpen, setDockOpen] = useState(false);
   const [running, setRunning] = useState(false);
@@ -139,8 +133,13 @@ export default function Game({ levelId }: { levelId: string }) {
           onUnlock={() => setLocked(false)}
           controlsRef={controls}
           onInteract={openDock}
+          onReady={() => setReady(true)}
           orbit={orbit}
         />
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 z-[70]">
+        <Loading label="Mengkalibrasi ruang uji" done={ready} />
       </div>
 
       {startedAt > 0 && !result && (

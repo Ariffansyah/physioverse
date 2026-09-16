@@ -418,3 +418,121 @@ input[type="number"]:focus-visible {
 .breathe {
   animation: breathe 2.8s var(--ease-settle) infinite;
 }
+
+
+@utility warp {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(
+    58% 58% at 50% 50%,
+    rgb(99 201 214 / 0.1),
+    transparent 70%
+  );
+}
+.warp > i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--c, var(--color-starlight));
+  box-shadow: 0 0 6px var(--c, var(--color-starlight));
+  transform-origin: 0 50%;
+  animation: warp var(--d) linear var(--t) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes warp {
+  0% {
+    transform: rotate(var(--a)) translateX(var(--r)) scaleX(1);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--a)) translateX(130vmax) scaleX(46);
+    opacity: 0;
+  }
+}
+
+/* streaks racing at the viewer is exactly the motion vestibular disorders hate */
+@media (prefers-reduced-motion: reduce) {
+  .warp > i {
+    animation: none;
+    transform: rotate(var(--a)) translateX(var(--r));
+    opacity: 0.45;
+  }
+}
+
+
+/* dropping out of warp: the streaks rush past and the field opens up */
+.warp {
+  transition:
+    transform 1.1s cubic-bezier(0.3, 0, 0.1, 1),
+    opacity 0.7s ease 0.45s;
+}
+.warp-out {
+  transform: scale(1.45);
+  opacity: 0;
+  /* late on purpose: the hold is long, and an empty field for two seconds is
+     worse than the warp running until the screen actually leaves */
+  transition-delay: 2.3s, 2.75s;
+}
+
+.warp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    18rem 18rem at 50% 50%,
+    rgb(237 190 112 / 0.14),
+    transparent 70%
+  );
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warp::after {
+    animation: none;
+  }
+}
+
+
+/* The crawl runs on the compositor: starting a 3D scene stalls the main thread
+   for seconds, and a bar stepped by a timer freezes exactly when it matters. */
+.meter > i.crawl {
+  width: 100%;
+  transform-origin: left center;
+  transition: none;
+}
+.meter > i.crawl {
+  animation: crawl 20s cubic-bezier(0.33, 0.1, 0.5, 1) forwards;
+}
+@keyframes crawl {
+  0% {
+    transform: scaleX(0.04);
+  }
+  10% {
+    transform: scaleX(0.34);
+  }
+  30% {
+    transform: scaleX(0.6);
+  }
+  60% {
+    transform: scaleX(0.78);
+  }
+  100% {
+    transform: scaleX(0.9);
+  }
+}
+

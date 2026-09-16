@@ -1,23 +1,61 @@
 "use client";
 
+import { Html } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
-import { AdditiveBlending, DoubleSide, type Group, type Mesh } from "three";
+import { useEffect, useRef, useSyncExternalStore, type RefObject } from "react";
+import { AdditiveBlending, DoubleSide, Vector3, type Group, type Mesh, type Object3D, type Sprite } from "three";
+import { setFocus, useFocus, useStops, type Stop } from "@/lib/focus";
+import { PLANETS } from "@/lib/planets";
+import { useNarrow } from "@/lib/touch";
+import { play } from "@/lib/sfx";
 import { glowTexture, planetTexture } from "@/lib/textures";
 
+
+const never = () => () => {};
 
 const STILL =
   typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 
-const MOONS = [
-  { color: "#f0b463", r: 2.3, size: 0.2, speed: 0.3, tilt: 0.45, roll: 0.1, phase: 0.4, spin: 0.5, ring: false },
-  { color: "#f79a42", r: 3.0, size: 0.16, speed: 0.24, tilt: -0.28, roll: -0.2, phase: 2.1, spin: -0.35, ring: false },
-  { color: "#5fb8ef", r: 3.8, size: 0.34, speed: 0.19, tilt: 0.22, roll: 0.26, phase: 4.4, spin: 0.22, ring: true },
-  { color: "#6fd49a", r: 4.7, size: 0.22, speed: 0.15, tilt: -0.5, roll: 0.05, phase: 1.2, spin: 0.4, ring: false },
-  { color: "#8fb0f2", r: 5.6, size: 0.28, speed: 0.12, tilt: 0.16, roll: -0.3, phase: 5.6, spin: -0.18, ring: false },
-  { color: "#b9c6d6", r: 6.6, size: 0.18, speed: 0.1, tilt: -0.2, roll: 0.18, phase: 3.0, spin: 0.3, ring: false },
-];
+
+function Sun() {
+  const flare = useRef<Sprite>(null);
+  const body = useRef<Mesh>(null);
+  const focus = useFocus();
+
+  useFrame((_, dt) => {
+    const s = flare.current;
+    const b = body.current;
+    if (!s || !b) return;
+    const k = STILL ? 1 : 1 - 0.02 ** dt;
+    // flying in among the planets puts the sun close: shrink it to a star
+    // instead of a dinner plate sitting over the menu
+    s.scale.x += ((focus >= 0 ? 1.6 : 5.5) - s.scale.x) * k;
+    s.scale.y = s.scale.x;
+    b.scale.x += ((focus >= 0 ? 0.42 : 1) - b.scale.x) * k;
+    b.scale.y = b.scale.x;
+    b.scale.z = b.scale.x;
+  });
+
+  return (
+    <>
+      <mesh ref={body}>
+        <sphereGeometry args={[0.42, 32, 32]} />
+        <meshBasicMaterial color="#ffeccb" />
+      </mesh>
+      <sprite ref={flare} scale={[5.5, 5.5, 1]}>
+        <spriteMaterial
+          map={glowTexture()}
+          color="#ffd9a8"
+          blending={AdditiveBlending}
+          opacity={0.7}
+          depthWrite={false}
+          transparent
+        />
+      </sprite>
+    </>
+  );
+}
 
 function Halo({ color, size }: { color: string; size: number }) {
   return (
@@ -34,7 +72,28 @@ function Halo({ color, size }: { color: string; size: number }) {
   );
 }
 
-function Moon({ color, r, size, speed, tilt, roll, phase, spin, ring }: (typeof MOONS)[number]) {
+function Moon({
+  color,
+  r,
+  speed,
+  tilt,
+  roll,
+  phase,
+  spin,
+  ring,
+  size,
+  mark,
+  stop,
+  card,
+  deck,
+  narrow,
+}: (typeof PLANETS)[number] & {
+  narrow: boolean;
+  mark: (o: Object3D | null) => void;
+  stop?: Stop;
+  card: boolean;
+  deck: RefObject<HTMLDivElement | null>;
+}) {
   const arm = useRef<Group>(null);
   const ball = useRef<Mesh>(null);
   useFrame(({ clock }, dt) => {
@@ -57,7 +116,12 @@ function Moon({ color, r, size, speed, tilt, roll, phase, spin, ring }: (typeof 
       </mesh>
       <group ref={arm}>
         <group position={[r, 0, 0]} rotation={[0, 0, 0.35]}>
-          <mesh ref={ball}>
+          <mesh
+            ref={(o) => {
+              ball.current = o;
+              mark(o);
+            }}
+          >
             <sphereGeometry args={[size, 48, 32]} />
             <meshStandardMaterial
               map={planetTexture(color, Math.round(r * 100))}
@@ -81,6 +145,73 @@ function Moon({ color, r, size, speed, tilt, roll, phase, spin, ring }: (typeof 
             </mesh>
           )}
           <Halo color={color} size={size * 7} />
+
+          {card && !narrow && stop?.card && (
+            // portalled out of the canvas: the starfield sits under a full
+            // layer of interface, and a card painted down there is unclickable
+            <Html portal={deck as RefObject<HTMLElement>} center zIndexRange={[40, 0]} pointerEvents="auto">
+              <div
+                role="presentation"
+                onClick={() => stop.go()}
+                onPointerEnter={() => {
+                  document.body.style.cursor = "pointer";
+                }}
+                onPointerLeave={() => {
+                  document.body.style.cursor = "auto";
+                }}
+                className="hud bracket w-[17rem] translate-x-[13.5rem] cursor-pointer bg-graphite/85 p-4 backdrop-blur-sm transition-colors duration-500 ease-settle"
+                style={{ ["--tint" as string]: stop.card.tint, borderColor: stop.card.tint }}
+              >
+                <p className="tag" style={{ color: stop.card.tint }}>
+                  {stop.card.kicker}
+                </p>
+                <p className="mt-2 font-serif text-lg leading-snug text-starlight">
+                  {stop.card.title}
+                </p>
+                <p className="mt-2 text-[13px] leading-relaxed text-ash">{stop.card.body}</p>
+                {stop.card.lines?.length ? (
+                  <dl className="mt-3 grid gap-1 border-t border-rule pt-3 font-mono text-[11px] tabular-nums text-ashdim">
+                    {stop.card.lines.map((line) => (
+                      <div key={line} className="flex justify-between gap-4">
+                        <dt>{line.split(" · ")[0]}</dt>
+                        <dd className="text-ash">{line.split(" · ").slice(1).join(" · ")}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+                <p className="mt-3 flex items-center justify-between gap-3 border-t border-rule pt-3 font-mono text-[11px] tracking-[0.16em] text-ashdim">
+                  {stop.card.meta}
+                  <span style={{ color: stop.card.tint }}>{stop.card.cta}</span>
+                </p>
+              </div>
+            </Html>
+          )}
+
+          {stop && !narrow && (
+            <mesh
+              // the planets are small at this distance; give the pointer a fair target
+              onPointerOver={(e) => {
+                if (blocked(e.nativeEvent)) return;
+                e.stopPropagation();
+                document.body.style.cursor = "pointer";
+                play("move");
+                setFocus(stop.planet);
+              }}
+              onPointerOut={() => {
+                document.body.style.cursor = "auto";
+              }}
+              onClick={(e) => {
+                if (blocked(e.nativeEvent)) return;
+                e.stopPropagation();
+                play("select");
+                stop.go();
+              }}
+            >
+              <sphereGeometry args={[Math.max(size * 3.2, 0.55), 16, 12]} />
+              {/* opacity 0, not visible={false}: r3f skips invisible objects when raycasting */}
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>
+          )}
         </group>
       </group>
     </group>
@@ -101,11 +232,16 @@ function Rig({ children }: { children: React.ReactNode }) {
     return () => removeEventListener("pointermove", onMove);
   }, []);
 
+  const focus = useFocus();
+
   useFrame(() => {
     const g = pivot.current;
     if (!g) return;
-    g.rotation.y += (aim.current.x * 0.3 - g.rotation.y) * 0.035;
-    g.rotation.x += (aim.current.y * 0.18 - g.rotation.x) * 0.035;
+    // chasing a planet while the whole system also swings under the pointer
+    // reads as seasickness, so the parallax backs off when one is picked
+    const sway = focus >= 0 ? 0.25 : 1;
+    g.rotation.y += (aim.current.x * 0.3 * sway - g.rotation.y) * 0.035;
+    g.rotation.x += (aim.current.y * 0.18 * sway - g.rotation.x) * 0.035;
   });
 
   return (
@@ -116,31 +252,104 @@ function Rig({ children }: { children: React.ReactNode }) {
 }
 
 
+/**
+ * The canvas itself cannot take pointer events: it is a background behind a
+ * full-screen layer of interface. So r3f listens on the body instead, and this
+ * throws away the hits that landed on something the page already handles.
+ */
+const blocked = (e: Event) => {
+  const el = e.target;
+  return el instanceof Element && !!el.closest("a, button, input, label, summary, [role='button']");
+};
+
+const HOME = new Vector3(0, 2.6, 9.5);
+const HOME_LOOK = new Vector3(3.1, 0.4, 0);
+/** Same wide shot, tilted up so the system sits low, under the phone's text. */
+const HOME_LOOK_NARROW = new Vector3(3.1, 3.6, 0);
+
+/** Flies the camera to whichever planet the menu is on, and back out again. */
+function Flight({ seats, narrow }: { seats: RefObject<(Object3D | null)[]>; narrow: boolean }) {
+  const focus = useFocus();
+  const look = useRef(HOME_LOOK.clone());
+  const at = useRef(new Vector3());
+  const seat = useRef(new Vector3());
+
+  useFrame(({ camera }, dt) => {
+    // a phone screen is all interface: nowhere to park a lit planet, and no
+    // hover to drive it either. The sky stays a wide backdrop there.
+    const planet = narrow || focus < 0 ? null : seats.current[focus];
+
+    if (planet) {
+      planet.getWorldPosition(at.current);
+      const back = 1.6 + (PLANETS[focus]?.size ?? 0.2) * 6;
+      seat.current.set(at.current.x, at.current.y + 0.35, at.current.z + back);
+      // aim left of the planet so it lands beside the list the page keeps
+      at.current.x -= back * 0.16;
+    } else {
+      at.current.copy(narrow ? HOME_LOOK_NARROW : HOME_LOOK);
+      seat.current.copy(HOME);
+    }
+
+    const k = STILL ? 1 : 1 - 0.015 ** dt;
+    camera.position.lerp(seat.current, k);
+    look.current.lerp(at.current, k);
+    camera.lookAt(look.current);
+  });
+
+  return null;
+}
+
 export default function SpaceStage() {
+  const seats = useRef<(Object3D | null)[]>([]);
+  const deck = useRef<HTMLDivElement>(null);
+  const stops = useStops();
+  const focus = useFocus();
+  const narrow = useNarrow();
+  // Handing r3f an eventSource changes the wrapper div's own style, and the
+  // server has no document to name one: the hydration render must still see
+  // undefined, exactly what the server snapshot gives it. Same shape as useTouch.
+  const source = useSyncExternalStore(never, () => document.body, () => undefined);
+
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+    <>
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
       <Canvas
         dpr={[1, 1.5]}
         gl={{ antialias: false, powerPreference: "high-performance" }}
         camera={{ fov: 50, position: [0, 2.6, 9.5] }}
+        eventSource={source}
+        // with an external source the hits arrive on whatever div is on top, so
+        // offsetX/offsetY are relative to the wrong box: use client coordinates
+        eventPrefix="client"
       >
         <ambientLight intensity={0.5} />
         <pointLight position={[0, 0, 0]} intensity={26} distance={22} color="#ffe6c0" />
         <directionalLight position={[-6, 8, 6]} intensity={0.8} />
 
+        <Flight seats={seats} narrow={narrow} />
+
         <Rig>
 
-          <mesh>
-            <sphereGeometry args={[0.42, 32, 32]} />
-            <meshBasicMaterial color="#ffeccb" />
-          </mesh>
-          <Halo color="#ffd9a8" size={5.5} />
+          <Sun />
 
-          {MOONS.map((m) => (
-            <Moon key={m.color} {...m} />
+          {PLANETS.map((p, i) => (
+            <Moon
+              key={p.chamber}
+              {...p}
+              stop={stops.find((t) => t.planet === i)}
+              card={focus === i}
+              deck={deck}
+              narrow={narrow}
+              mark={(o) => {
+                seats.current[i] = o;
+              }}
+            />
           ))}
         </Rig>
       </Canvas>
-    </div>
+      </div>
+      {/* the floating cards land here, above the page, clicks and all */}
+      <div ref={deck} aria-hidden="true" className="pointer-events-none fixed inset-0 z-50" />
+    </>
   );
 }

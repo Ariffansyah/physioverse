@@ -51,6 +51,7 @@ export default async function ChamberSelect() {
     return {
       id: l.id,
       idx: i + 1,
+      key: l.chamber,
       name: l.name,
       objective: l.objective,
       relation: l.clue.relation,

@@ -1,14 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { onFocus, setFocus, setStops } from "@/lib/focus";
+import type { ChamberKey } from "@/lib/levels";
+import { PLANETS, planetOf } from "@/lib/planets";
 import { play } from "@/lib/sfx";
-import { useTouch } from "@/lib/touch";
-
+import { useNarrow, useTouch } from "@/lib/touch";
 
 export type Stage = {
   id: string;
   idx: number;
+  key: ChamberKey;
   name: string;
   objective: string;
   relation: string;
@@ -24,256 +28,205 @@ export type Stage = {
 };
 
 const secs = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
-
+const PLANET_KEYS = PLANETS.map((p) => p.chamber);
 
 export default function StageSelect({ stages }: { stages: Stage[] }) {
   const touch = useTouch();
+  const narrow = useNarrow();
+  const router = useRouter();
   const [sel, setSel] = useState(0);
-  const track = useRef<HTMLUListElement>(null);
-  const cards = useRef<(HTMLAnchorElement | null)[]>([]);
-  const pending = useRef(0);
+  const rows = useRef<(HTMLAnchorElement | null)[]>([]);
 
+  // planet clicks arrive outside React's render, so they read the list through refs
+  const at = useRef(sel);
+  const jumpTo = useRef<(i: number, quiet?: boolean) => void>(() => {});
 
-  const center = (i: number, behavior: ScrollBehavior = "smooth") => {
-    const el = cards.current[i];
-    const rail = track.current;
-    if (!el || !rail) return;
-    rail.scrollTo({
-      left: el.offsetLeft + el.offsetWidth / 2 - rail.clientWidth / 2,
-      behavior,
-    });
-  };
-
-
-  useEffect(() => center(sel, "auto"), []);
-
-  const jump = (i: number, quiet = false, behavior: ScrollBehavior = "smooth") => {
+  const jump = (i: number, quiet = false) => {
     if (!quiet) play("move");
     setSel(i);
-    center(i, behavior);
-    cards.current[i]?.focus({ preventScroll: true });
+    rows.current[i]?.focus({ preventScroll: true });
+    rows.current[i]?.scrollIntoView({ block: "nearest" });
   };
 
+  useEffect(() => {
+    at.current = sel;
+    jumpTo.current = jump;
+  });
 
-  const move = (step: number) => {
-    const raw = sel + step;
-    const wrapped = raw < 0 || raw >= stages.length;
-    const next = (raw + stages.length) % stages.length;
-    if (next !== sel) jump(next, false, wrapped ? "instant" : "smooth");
-  };
+  // the list aims the camera
+  useEffect(() => {
+    setFocus(planetOf(stages[sel].key));
+  }, [sel, stages]);
 
+  // every planet carries the mission you are on in that room, or its first one
+  useEffect(() => {
+    setStops(
+      stages
+        .map((s, i) => ({ s, i }))
+        .filter(({ s, i }) => i === 0 || stages[i - 1].key !== s.key)
+        .map(({ s, i }) => {
+          const show = stages[sel].key === s.key ? stages[sel] : s;
+          const lines = [
+            show.yourMs !== undefined ? `Waktumu · ${secs(show.yourMs)}` : "",
+            show.recordMs !== undefined ? `Rekor · ${secs(show.recordMs)} ${show.recordBy}` : "",
+          ].filter(Boolean);
 
-  const onScroll = () => {
-    const rail = track.current;
-    if (!rail || pending.current) return;
-    pending.current = requestAnimationFrame(() => {
-      pending.current = 0;
-      const mid = rail.scrollLeft + rail.clientWidth / 2;
-      let near = 0;
-      let gap = Infinity;
-      cards.current.forEach((el, i) => {
-        if (!el) return;
-        const d = Math.abs(el.offsetLeft + el.offsetWidth / 2 - mid);
-        if (d < gap) {
-          gap = d;
-          near = i;
-        }
-      });
-      setSel(near);
-    });
-  };
+          return {
+            planet: planetOf(s.key),
+            label: s.chamber,
+            card: {
+              kicker: `${s.chamber} · ${String(show.idx).padStart(2, "0")}`,
+              title: show.name,
+              body: show.objective,
+              lines,
+              meta: `${show.xp} XP · ± ${show.tolerance} ${show.unit}`,
+              cta: show.solved ? "ULANGI ▸" : "MAIN ▸",
+              tint: s.tint,
+            },
+            // same rule as the rows: pick the room first, enter on the second go
+            go: () => {
+              const here = stages[at.current];
+              if (here.key === s.key) {
+                play("select");
+                router.push(`/play/${here.id}`);
+              } else {
+                jumpTo.current(i);
+              }
+            },
+          };
+        }),
+    );
+  }, [stages, sel, router]);
 
+  // and a planet picked in the sky steers the list
+  useEffect(
+    () =>
+      onFocus((planet) => {
+        const key = PLANET_KEYS[planet];
+        if (!key || stages[at.current].key === key) return;
+        const i = stages.findIndex((s) => s.key === key);
+        if (i >= 0) jumpTo.current(i, true);
+      }),
+    [stages],
+  );
+
+  useEffect(
+    () => () => {
+      setFocus(-1);
+      setStops([]);
+    },
+    [],
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-
-
       const el = e.target;
-      if (el instanceof Element && el.closest("input, textarea, select, [contenteditable]")) {
-        return;
-      }
+      if (el instanceof Element && el.closest("input, textarea, select, [contenteditable]")) return;
 
-      const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      const step =
+        e.key === "ArrowDown" || e.key === "ArrowRight"
+          ? 1
+          : e.key === "ArrowUp" || e.key === "ArrowLeft"
+            ? -1
+            : 0;
       if (step) {
         e.preventDefault();
-        move(step);
+        jump((sel + step + stages.length) % stages.length);
         return;
       }
       if (e.key === "Home" || e.key === "End") {
         e.preventDefault();
-        const to = e.key === "Home" ? 0 : stages.length - 1;
-        if (to !== sel) jump(to);
+        jump(e.key === "Home" ? 0 : stages.length - 1);
       }
     };
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
   });
 
-  const active = stages[sel];
-
   return (
-    <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] content-center gap-6">
-
-
-      <ol className="flex flex-wrap items-center gap-x-2 gap-y-2 px-6 sm:px-10 lg:px-16">
+    // narrow on purpose: the planet and its card are the main view, this is the index
+    <div className="grid gap-3 px-6 sm:px-10 lg:px-16">
+      <ol className="hud max-h-[min(58vh,34rem)] w-full max-w-[24rem] overflow-y-auto bg-graphite/70 p-1.5 backdrop-blur-sm [scrollbar-width:thin]">
         {stages.map((s, i) => {
-          const first = i === 0 || stages[i - 1].chamber !== s.chamber;
-          if (!first) return null;
-          const on = s.chamber === active.chamber;
+          const head = i === 0 || stages[i - 1].key !== s.key;
+          const on = i === sel && !narrow;
           return (
-            <li key={s.chamber}>
-              <button
-                type="button"
-                onClick={() => jump(i)}
-                className="flex items-center gap-2 px-2 py-1 font-mono text-[11px] tracking-[0.16em] uppercase transition-colors duration-500 ease-settle"
-                style={{ color: on ? s.tint : undefined }}
+            <li key={s.id}>
+              {head && (
+                <p className="tag px-3 pb-1 pt-3 text-[10px]" style={{ color: s.tint }}>
+                  {s.chamber}
+                </p>
+              )}
+              <Link
+                ref={(el) => {
+                  rows.current[i] = el;
+                }}
+                href={`/play/${s.id}`}
+                onFocus={(e) => {
+                  if (i !== sel && e.currentTarget.matches(":focus-visible")) setSel(i);
+                }}
+                // a tap fires pointerenter and click in one gesture, so on touch the
+                // selection must come from the click alone or the first tap enters
+                onPointerEnter={
+                  touch
+                    ? undefined
+                    : () => {
+                        if (i !== sel) {
+                          play("move");
+                          setSel(i);
+                        }
+                      }
+                }
+                onClick={(e) => {
+                  // on a phone there is no planet to pick first: the row opens
+                  if (i !== sel && !narrow) {
+                    e.preventDefault();
+                    jump(i);
+                    return;
+                  }
+                  play("select");
+                }}
+                aria-current={on ? "true" : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-300 ease-settle ${
+                  on
+                    ? "bg-[color-mix(in_oklab,var(--tint)_14%,transparent)]"
+                    : "hover:bg-graphite-hi/60"
+                }`}
+                style={{ ["--tint" as string]: s.tint }}
               >
                 <span
-                  aria-hidden="true"
-                  className="size-1.5 rounded-full transition-opacity duration-500"
-                  style={{ background: s.tint, opacity: on ? 1 : 0.3 }}
-                />
-                <span className={on ? "" : "text-ashdim"}>{s.chamber}</span>
-              </button>
+                  className="w-6 shrink-0 font-mono text-[13px] tabular-nums"
+                  style={{ color: on ? s.tint : undefined }}
+                >
+                  <span className={on ? "" : "text-ashdim"}>{String(s.idx).padStart(2, "0")}</span>
+                </span>
+                <span
+                  className={`truncate text-[15px] transition-colors duration-300 ease-settle ${
+                    on ? "text-starlight" : "text-ash"
+                  }`}
+                >
+                  {s.name}
+                </span>
+                <span
+                  aria-label={s.solved ? "Selesai" : "Belum"}
+                  className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.16em]"
+                  style={{ color: s.solved ? "var(--color-champagne)" : "var(--color-ashdim)" }}
+                >
+                  {s.solved ? "✓" : "·"}
+                </span>
+              </Link>
             </li>
           );
         })}
       </ol>
 
-
-      <div className="relative min-h-0">
-        <ul
-          ref={track}
-          onScroll={onScroll}
-          className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[calc(50%-8.5rem)] pb-8 pt-6 sm:px-[calc(50%-9.5rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {stages.map((s, i) => {
-            const on = i === sel;
-
-
-            const step = Math.abs(i - sel);
-            const size =
-              step === 0
-                ? "scale-100 opacity-100"
-                : step === 1
-                  ? "scale-[0.86] opacity-70"
-                  : "scale-[0.78] opacity-40";
-            return (
-              <li key={s.id} className="snap-center">
-                <Link
-                  ref={(el) => {
-                    cards.current[i] = el;
-                  }}
-                  href={`/play/${s.id}`}
-
-
-                  onFocus={(e) => {
-                    if (i !== sel && e.currentTarget.matches(":focus-visible")) jump(i, true);
-                  }}
-                  onClick={(e) => {
-                    if (i !== sel) {
-                      e.preventDefault();
-                      jump(i);
-                      return;
-                    }
-                    play("select");
-                  }}
-                  aria-current={on ? "true" : undefined}
-                  className={`hud bracket flex h-full w-[17rem] flex-col gap-3 p-5 transition-all duration-500 ease-spring sm:w-[19rem] ${size} ${
-                    on ? "border-[color:var(--tint)] shadow-[0_0_50px_-16px_var(--tint)]" : ""
-                  }`}
-                  style={{ ["--tint" as string]: s.tint }}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <span
-                      className="font-mono text-[2rem] leading-none tabular-nums transition-colors duration-500 ease-settle"
-                      style={{ color: on ? s.tint : undefined }}
-                    >
-                      <span className={on ? "" : "text-ashdim/40"}>
-                        {String(s.idx).padStart(2, "0")}
-                      </span>
-                    </span>
-                    <span
-                      className="chip"
-                      style={
-                        s.solved ? { ["--tint" as string]: "var(--color-champagne)" } : undefined
-                      }
-                    >
-                      {s.solved ? "Selesai" : "Belum"}
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl leading-snug text-starlight">{s.name}</h3>
-                  <p className="text-[14px] leading-relaxed text-ash">{s.objective}</p>
-                  <p
-                    className="font-serif text-base italic transition-colors duration-500 ease-settle"
-                    style={{ color: on ? s.tint : "var(--color-quantum)" }}
-                  >
-                    {s.relation}
-                  </p>
-
-
-                  <dl className="mt-1 grid gap-1.5 border-t border-rule pt-3 font-mono text-[11px] tabular-nums text-ashdim">
-                    <div className="flex justify-between gap-4">
-                      <dt>Boleh meleset</dt>
-                      <dd>
-                        ± {s.tolerance} {s.unit}
-                      </dd>
-                    </div>
-                    {s.yourMs !== undefined && (
-                      <div className="flex justify-between gap-4">
-                        <dt>Waktumu</dt>
-                        <dd className="text-champagne">{secs(s.yourMs)}</dd>
-                      </div>
-                    )}
-                    {s.recordMs !== undefined && (
-                      <div className="flex justify-between gap-4">
-                        <dt>Rekor</dt>
-                        <dd className="text-ash">
-                          {secs(s.recordMs)} · {s.recordBy}
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
-
-                  <div className="mt-auto flex items-center justify-between pt-2">
-                    <span className="font-mono text-[11px] tabular-nums text-quantum">
-                      {s.xp} XP
-                    </span>
-                    <span
-                      className="font-mono text-[11px] tracking-[0.18em] transition-colors duration-500 ease-settle"
-                      style={{ color: on ? s.tint : undefined }}
-                    >
-                      <span className={on ? "" : "text-ashdim"}>
-                        {on ? "MAIN ▸" : "LIHAT"}
-                      </span>
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-
-        {([-1, 1] as const).map((step) => (
-          <button
-            key={step}
-            type="button"
-            onClick={() => move(step)}
-            aria-label={step < 0 ? "Tahap sebelumnya" : "Tahap berikutnya"}
-            className={`hud absolute top-1/2 hidden size-10 -translate-y-1/2 place-items-center font-mono text-sm text-ash transition-all duration-500 ease-settle hover:border-champagne hover:text-champagne sm:grid ${
-              step < 0 ? "left-2" : "right-2"
-            }`}
-          >
-            {step < 0 ? "◂" : "▸"}
-          </button>
-        ))}
-      </div>
-
-      <p className="px-6 text-[13px] text-ashdim sm:px-10 lg:px-16">
-        {touch ? "Geser kartunya, lalu ketuk untuk masuk" : "Pakai ← → lalu Enter, atau klik kartunya"} ·{" "}
-        {sel + 1} / {stages.length}
+      <p className="text-[13px] text-ashdim">
+        {narrow
+          ? "Ketuk misinya untuk masuk"
+          : touch
+            ? "Ketuk planetnya atau daftarnya, lalu ketuk kartunya untuk masuk"
+            : "Pakai ↑ ↓ lalu Enter, klik planetnya, atau klik kartunya"}{" "}
+        · {sel + 1} / {stages.length}
       </p>
     </div>
   );

@@ -9,14 +9,7 @@ import { CHAMBERS, LEVELS, getLevel, type ChamberKey } from "@/lib/levels";
 import { LESSONS } from "@/lib/lesson";
 import { play } from "@/lib/sfx";
 
-const World = dynamic(() => import("./game/World"), {
-  ssr: false,
-  loading: () => (
-    <div className="size-full bg-well">
-      <Loading label="Menyiapkan simulasi" />
-    </div>
-  ),
-});
+const World = dynamic(() => import("./game/World"), { ssr: false });
 
 
 export default function Study({ chamber }: { chamber: ChamberKey }) {
@@ -29,7 +22,9 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
     ...level.defaults,
     ...lesson.defaults,
   }));
+  const [ready, setReady] = useState(false);
   const [runToken, setRunToken] = useState(0);
+  const [knobs, setKnobs] = useState(true);
   const [reading, setReading] = useState<number | null>(null);
 
 
@@ -45,14 +40,19 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
 
   return (
     <div className="relative z-2 flex min-h-svh flex-col lg:h-svh lg:grid lg:grid-cols-[minmax(0,1fr)_27rem] lg:overflow-hidden">
-      <div className="relative h-[64vh] min-h-0 lg:h-auto">
+      <div className="relative h-[64vh] min-h-0 overflow-hidden sm:overflow-visible lg:h-auto">
         <World
           levelId={level.id}
           params={params}
           runToken={runToken}
           onFinish={setReading}
+          onReady={() => setReady(true)}
           orbit={{ camera: lesson.camera, target: lesson.target, spin: true }}
         />
+
+        <div className="pointer-events-none absolute inset-0 z-[70]">
+          <Loading label="Menyiapkan simulasi" done={ready} />
+        </div>
 
         <div className="absolute left-4 top-4 flex items-center gap-4">
           <span className="hud px-3 py-2">
@@ -68,8 +68,25 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
         </div>
 
 
-        <div className="hud absolute bottom-4 left-4 right-4 grid gap-3 bg-graphite/85 p-4 backdrop-blur-sm sm:right-auto sm:w-[20rem]">
-          <p className="tag">Atur sendiri</p>
+        {/* z-30: the 3D labels ride at 20 and would otherwise print over this */}
+        <div className="hud absolute inset-x-4 bottom-4 z-30 grid gap-3 bg-graphite/90 p-4 backdrop-blur-sm sm:inset-x-auto sm:left-4 sm:w-[20rem]">
+          <p className="tag hidden sm:block">Atur sendiri</p>
+          <button
+            type="button"
+            onClick={() => {
+              play("move");
+              setKnobs((open) => !open);
+            }}
+            aria-expanded={knobs}
+            className="flex items-center justify-between gap-3 sm:hidden"
+          >
+            <span className="tag">Atur sendiri</span>
+            <span className="font-mono text-[11px] tracking-[0.16em] text-champagne">
+              {knobs ? "TUTUP ▾" : "BUKA ▴"}
+            </span>
+          </button>
+
+          <div className={knobs ? "grid gap-3" : "hidden sm:grid sm:gap-3"}>
           {lesson.controls.map((c) => (
             <label key={c.key} className="grid gap-1.5">
               <span className="flex items-baseline justify-between gap-3 text-[13px] text-ash">
@@ -104,6 +121,7 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
           >
             Putar ulang
           </button>
+          </div>
         </div>
       </div>
 

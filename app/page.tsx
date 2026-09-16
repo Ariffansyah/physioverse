@@ -4,6 +4,7 @@ import Notice from "@/components/Notice";
 import SoundToggle from "@/components/SoundToggle";
 import SpaceStage from "@/components/SpaceStage";
 import { CHAMBERS, LEVELS } from "@/lib/levels";
+import { planetOf } from "@/lib/planets";
 import { createClient } from "@/lib/supabase/server";
 
 
@@ -20,17 +21,42 @@ export default async function Landing() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const chambers = Object.keys(CHAMBERS).length;
+  const rooms = Object.values(CHAMBERS);
+  const chambers = rooms.length;
   const items: MenuItem[] = [
     {
       label: user ? "Lanjut main" : "Mulai main",
       hint: `${LEVELS.length} misi`,
       href: "/play",
+      planet: planetOf("photonics"),
+      preview: [...LEVELS.slice(0, 3).map((l) => l.name), `+${LEVELS.length - 3} misi lagi`],
     },
-    { label: "Belajar dulu", hint: `${chambers} ruang`, href: "/belajar" },
+    {
+      label: "Belajar dulu",
+      hint: `${chambers} ruang`,
+      href: "/belajar",
+      planet: planetOf("quantum"),
+      preview: [...rooms.slice(0, 3).map((c) => c.name), `+${chambers - 3} ruang lagi`],
+    },
 
-    ...(user ? [] : [{ label: "Masuk akun", hint: "simpan progresmu", href: "/auth/login" }]),
-    { label: "Tentang", hint: "isi situs ini", href: "/tentang" },
+    ...(user
+      ? []
+      : [
+          {
+            label: "Masuk akun",
+            hint: "simpan progresmu",
+            href: "/auth/login",
+            planet: planetOf("kinetics"),
+            preview: ["progres tersimpan", "papan peringkat", "lanjut di perangkat lain"],
+          },
+        ]),
+    {
+      label: "Tentang",
+      hint: "isi situs ini",
+      href: "/tentang",
+      planet: planetOf("gravity"),
+      preview: ["kenapa dibuat", "sumber & lisensi", "kontak"],
+    },
   ];
 
   return (

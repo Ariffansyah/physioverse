@@ -37,6 +37,7 @@ export default function World({
   onUnlock,
   controlsRef,
   onInteract,
+  onReady,
   hud,
   orbit,
 }: {
@@ -50,6 +51,7 @@ export default function World({
   onUnlock?: () => void;
   controlsRef?: RefObject<Lockable | null>;
   onInteract?: () => void;
+  onReady?: () => void;
   hud?: React.ReactNode;
 
   orbit?: {
@@ -72,6 +74,7 @@ export default function World({
       dpr={[1, 1.5]}
       gl={{ antialias: false, powerPreference: "high-performance" }}
       camera={{ fov: orbit ? 45 : 75, near: 0.2, far: 220, position: orbit?.camera }}
+      onCreated={() => onReady?.()}
     >
       <color attach="background" args={["#050a14"]} />
       <fog attach="fog" args={["#0a1424", 22, 130]} />
