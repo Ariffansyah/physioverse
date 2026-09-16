@@ -46,14 +46,37 @@ grant delete on public.runs to authenticated;
 grant select on public.notice to anon, authenticated;
 grant update on public.notice to authenticated;
 
-alter table public.notice enable row level security;
+alter table public.runs     enable row level security;
+alter table public.profiles enable row level security;
+alter table public.notice   enable row level security;
 
-drop policy if exists "own runs writable"        on public.runs;
-drop policy if exists "admin reads all runs"     on public.runs;
-drop policy if exists "admin deletes runs"       on public.runs;
-drop policy if exists "admin moderates profiles" on public.profiles;
-drop policy if exists "notice is public"         on public.notice;
-drop policy if exists "admin writes notice"      on public.notice;
+-- Anon tidak punya urusan dengan dua tabel ini; papan rekor lewat view.
+revoke all on public.runs     from anon;
+revoke all on public.profiles from anon;
+
+-- Skema lama bisa meninggalkan kebijakan permisif dengan nama yang sudah tidak
+-- dipakai lagi, misalnya select `using (true)` di runs dari zaman papan rekor
+-- masih membaca tabelnya langsung. Kebijakan itu tetap berlaku walau schema.sql
+-- sudah diperbaiki, jadi bersihkan dulu semuanya lalu pasang ulang yang benar.
+do $$
+declare pol record;
+begin
+  for pol in
+    select tablename, policyname from pg_policies
+    where schemaname = 'public' and tablename in ('runs', 'profiles', 'notice')
+  loop
+    execute format('drop policy %I on public.%I', pol.policyname, pol.tablename);
+  end loop;
+end $$;
+
+create policy "profiles are readable" on public.profiles for select to authenticated
+  using (true);
+
+create policy "own profile is writable" on public.profiles for update to authenticated
+  using (id = (select auth.uid())) with check (id = (select auth.uid()));
+
+create policy "own runs readable" on public.runs for select to authenticated
+  using (user_id = (select auth.uid()));
 
 create policy "own runs writable" on public.runs for insert to authenticated
   with check (

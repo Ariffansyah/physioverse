@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Colophon from "@/components/Colophon";
 import SpaceStage from "@/components/SpaceStage";
 import TopBar from "@/components/TopBar";
@@ -14,6 +15,7 @@ type Run = {
   solved: boolean;
   elapsed_ms: number;
   created_at: string;
+  profiles: { username: string } | null;
 };
 type Player = {
   id: string;
@@ -28,29 +30,57 @@ const when = (iso: string) =>
   new Date(iso).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
 
 const DAY = 86_400_000;
+const PAGE = 25;
+const SAMPLE = 500;
 
-export default async function AdminConsole() {
+const at = (p: number) => Math.max(1, Number(p) || 1);
+const span = (page: number) => [(page - 1) * PAGE, page * PAGE - 1] as const;
+
+export default async function AdminConsole({
+  searchParams,
+}: {
+  searchParams: Promise<{ runs?: string; akun?: string }>;
+}) {
   const { supabase, profile } = await requireAdmin();
 
-  // ponytail: 500 percobaan terakhir cukup untuk situs sebesar ini. Kalau
-  // datanya tumbuh, pindahkan agregasi di bawah ke view SQL.
-  const [{ data: runs }, { data: players }, { data: notice }] = await Promise.all([
+  const sp = await searchParams;
+  const runsPage = at(Number(sp.runs));
+  const akunPage = at(Number(sp.akun));
+  const href = (runs: number, akun: number) => `/admin?runs=${runs}&akun=${akun}`;
+
+  // Dua tabel di bawah dipenggal 25 baris per halaman lewat `.range()`, jadi
+  // yang diambil cuma sebanyak yang ditampilkan.
+  //
+  // ponytail: ringkasan per misi dan XP per pemain masih dihitung di sini dari
+  // 500 percobaan terakhir, bukan dari seluruh riwayat. Kalau situsnya ramai,
+  // pindahkan dua agregasi itu ke view SQL.
+  const [{ data: sample }, logPage, rosterPage, { data: notice }] = await Promise.all([
     supabase
       .from("runs")
-      .select("id, user_id, level_id, solved, elapsed_ms, created_at")
+      .select("id, user_id, level_id, solved, elapsed_ms, created_at, profiles(username)")
       .order("created_at", { ascending: false })
-      .limit(500)
+      .limit(SAMPLE)
+      .returns<Run[]>(),
+    supabase
+      .from("runs")
+      .select("id, user_id, level_id, solved, elapsed_ms, created_at, profiles(username)", {
+        count: "exact",
+      })
+      .order("created_at", { ascending: false })
+      .range(...span(runsPage))
       .returns<Run[]>(),
     supabase
       .from("profiles")
-      .select("id, username, role, banned, created_at")
+      .select("id, username, role, banned, created_at", { count: "exact" })
+      .order("created_at", { ascending: true })
+      .range(...span(akunPage))
       .returns<Player[]>(),
     supabase.from("notice").select("body").eq("id", true).single<{ body: string }>(),
   ]);
 
-  const log = runs ?? [];
-  const roster = players ?? [];
-  const name = new Map(roster.map((p) => [p.id, p.username]));
+  const log = sample ?? [];
+  const recent = logPage.data ?? [];
+  const roster = rosterPage.data ?? [];
 
   const perLevel = LEVELS.map((l) => {
     const mine = log.filter((r) => r.level_id === l.id);
@@ -84,10 +114,10 @@ export default async function AdminConsole() {
   ).size;
 
   const totals = [
-    ["Akun", `${roster.length}`],
+    ["Akun", `${rosterPage.count ?? roster.length}`],
     ["Aktif 7 hari", `${active}`],
-    ["Percobaan", `${log.length}`],
-    ["Dibekukan", `${roster.filter((p) => p.banned).length}`],
+    ["Percobaan", `${logPage.count ?? log.length}`],
+    ["Peran", `${roster.filter((p) => p.role === "admin").length} pengelola`],
   ];
 
   return (
@@ -143,7 +173,7 @@ export default async function AdminConsole() {
             <section className="hud bracket mt-6 grid gap-3 p-6 [--tint:var(--color-oxide)]">
               <p className="tag">Perlu dikalibrasi</p>
               <p className="max-w-[72ch] text-[15px] leading-relaxed text-ash">
-                Misi yang hampir tidak pernah tuntas — periksa toleransi dan rentang
+                Misi yang hampir tidak pernah tuntas. Periksa toleransi dan rentang
                 slidernya di <code className="font-mono text-[13px] text-champagne">lib/levels.ts</code>:{" "}
                 {offBalance.map((r) => `${r.level.name} (${r.wins}/${r.tries})`).join(" · ")}.
               </p>
@@ -152,7 +182,8 @@ export default async function AdminConsole() {
 
           <section className="mt-10 grid gap-4">
             <h2 className="tag">Akun</h2>
-            <div className="hud overflow-x-auto">
+            <div className="hud">
+              <div className="overflow-x-auto">
               <table className="w-full min-w-[52rem] text-left text-sm">
                 <thead className="font-mono text-[11px] tracking-[0.18em] text-ashdim">
                   <tr className="border-b border-rule">
@@ -223,6 +254,8 @@ export default async function AdminConsole() {
                   ))}
                 </tbody>
               </table>
+              </div>
+              <Pager page={akunPage} count={rosterPage.count ?? 0} href={(n) => href(runsPage, n)} />
             </div>
           </section>
 
@@ -256,7 +289,7 @@ export default async function AdminConsole() {
                       </td>
                       <td className="px-4 py-3 font-mono tabular-nums text-champagne">
                         {r.best
-                          ? `${secs(r.best.elapsed_ms)} · ${name.get(r.best.user_id) ?? "?"}`
+                          ? `${secs(r.best.elapsed_ms)} · ${r.best.profiles?.username ?? "?"}`
                           : "—"}
                       </td>
                     </tr>
@@ -268,7 +301,8 @@ export default async function AdminConsole() {
 
           <section className="mt-10 grid gap-4">
             <h2 className="tag">Percobaan terakhir</h2>
-            <div className="hud overflow-x-auto">
+            <div className="hud">
+              <div className="overflow-x-auto">
               <table className="w-full min-w-[46rem] text-left text-sm">
                 <thead className="font-mono text-[11px] tracking-[0.18em] text-ashdim">
                   <tr className="border-b border-rule">
@@ -281,12 +315,12 @@ export default async function AdminConsole() {
                   </tr>
                 </thead>
                 <tbody>
-                  {log.slice(0, 40).map((r) => (
+                  {recent.map((r) => (
                     <tr key={r.id} className="border-b border-rule/50 last:border-0">
                       <td className="px-4 py-3 font-mono text-[12px] tabular-nums text-ashdim">
                         {when(r.created_at)}
                       </td>
-                      <td className="px-4 py-3 text-starlight">{name.get(r.user_id) ?? "—"}</td>
+                      <td className="px-4 py-3 text-starlight">{r.profiles?.username ?? "—"}</td>
                       <td className="px-4 py-3 text-ash">
                         {LEVELS.find((l) => l.id === r.level_id)?.name ?? r.level_id}
                       </td>
@@ -308,7 +342,7 @@ export default async function AdminConsole() {
                       </td>
                     </tr>
                   ))}
-                  {log.length === 0 && (
+                  {recent.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-4 py-6 text-center text-ash">
                         Belum ada yang main.
@@ -317,6 +351,8 @@ export default async function AdminConsole() {
                   )}
                 </tbody>
               </table>
+              </div>
+              <Pager page={runsPage} count={logPage.count ?? 0} href={(n) => href(n, akunPage)} />
             </div>
           </section>
         </main>
@@ -324,5 +360,45 @@ export default async function AdminConsole() {
         <Colophon />
       </div>
     </>
+  );
+}
+
+/** Pager 25 baris. Tautan biasa, jadi tidak ada state klien yang perlu diurus. */
+function Pager({
+  page,
+  count,
+  href,
+}: {
+  page: number;
+  count: number;
+  href: (page: number) => string;
+}) {
+  const last = Math.max(1, Math.ceil(count / PAGE));
+  const first = count === 0 ? 0 : (page - 1) * PAGE + 1;
+  const step = (to: number, label: string, on: boolean) =>
+    on ? (
+      <Link
+        key={label}
+        href={href(to)}
+        className="transition-colors duration-500 ease-settle hover:text-champagne"
+      >
+        {label}
+      </Link>
+    ) : (
+      <span key={label} className="opacity-30">
+        {label}
+      </span>
+    );
+
+  return (
+    <div className="flex items-center justify-between gap-6 border-t border-rule px-4 py-3 font-mono text-[11px] tracking-[0.18em] text-ashdim">
+      <span className="tabular-nums">
+        {first}&ndash;{Math.min(page * PAGE, count)} DARI {count}
+      </span>
+      <span className="flex gap-6">
+        {step(page - 1, "SEBELUMNYA", page > 1)}
+        {step(page + 1, "BERIKUTNYA", page < last)}
+      </span>
+    </div>
   );
 }

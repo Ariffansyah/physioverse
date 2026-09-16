@@ -15,6 +15,8 @@ Licensed under the [MIT License](LICENSE).
 | **Main menu.** Everything opens from here, no account required. | **Mission list.** 21 missions across 7 chambers, with your best time next to the standing record. |
 | ![Inside a chamber](docs/mission.png) | ![Learning mode](docs/learn.png) |
 | **Inside a chamber.** Walk to the bench, press `E`, and the console opens where you stand. | **Learning mode.** Drag a knob, the simulation reruns, and the working is written out line by line beside it. |
+| ![Operator console](docs/admin.png) | ![Moderation](docs/moderation.png) |
+| **Operator console.** The site notice, and the missions almost nobody solves. | **Moderation.** Freeze an account or mask a callsign, 25 rows to a page. |
 
 ## Sub-theme: Education
 
