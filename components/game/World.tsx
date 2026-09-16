@@ -1,9 +1,16 @@
 "use client";
 
-import { Environment, Lightformer, OrbitControls, PointerLockControls, Stars } from "@react-three/drei";
+import {
+  Environment,
+  Lightformer,
+  OrbitControls,
+  PerformanceMonitor,
+  PointerLockControls,
+  Stars,
+} from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Bloom, ChromaticAberration, EffectComposer, Vignette } from "@react-three/postprocessing";
-import type { RefObject } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import { CHAMBERS, getLevel } from "@/lib/levels";
 import Ballistics from "./chambers/ballistics";
 import Court from "./chambers/court";
@@ -61,6 +68,12 @@ export default function World({
     spin?: boolean;
   };
 }) {
+  const [lean, setLean] = useState(false);
+  const armed = useRef(0);
+  useEffect(() => {
+    armed.current = performance.now() + 6000;
+  }, []);
+
   const level = getLevel(levelId);
   if (!level) return null;
   const tint = CHAMBERS[level.chamber]?.tint ?? "#e8a04a";
@@ -71,11 +84,20 @@ export default function World({
 
   return (
     <Canvas
-      dpr={[1, 1.5]}
+      dpr={lean ? 1 : [1, 1.5]}
       gl={{ antialias: false, powerPreference: "high-performance" }}
       camera={{ fov: orbit ? 45 : 75, near: 0.2, far: 220, position: orbit?.camera }}
       onCreated={() => onReady?.()}
     >
+      <PerformanceMonitor
+        ms={300}
+        iterations={8}
+        bounds={() => [30, 55]}
+        onDecline={() => {
+          if (performance.now() > armed.current) setLean(true);
+        }}
+      />
+
       <color attach="background" args={["#050a14"]} />
       <fog attach="fog" args={["#0a1424", 22, 130]} />
 
@@ -136,18 +158,20 @@ export default function World({
         />
       )}
 
-      <EffectComposer multisampling={4}>
-        <Bloom
-          intensity={0.85}
-          luminanceThreshold={0.32}
-          luminanceSmoothing={0.7}
-          radius={0.92}
-          mipmapBlur
-          resolutionScale={0.5}
-        />
-        <ChromaticAberration offset={[0.0007, 0.0007]} radialModulation modulationOffset={0.4} />
-        <Vignette offset={0.28} darkness={0.72} />
-      </EffectComposer>
+      {!lean && (
+        <EffectComposer multisampling={4}>
+          <Bloom
+            intensity={0.85}
+            luminanceThreshold={0.32}
+            luminanceSmoothing={0.7}
+            radius={0.92}
+            mipmapBlur
+            resolutionScale={0.5}
+          />
+          <ChromaticAberration offset={[0.0007, 0.0007]} radialModulation modulationOffset={0.4} />
+          <Vignette offset={0.28} darkness={0.72} />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }
