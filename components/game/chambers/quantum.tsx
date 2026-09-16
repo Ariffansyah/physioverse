@@ -2,9 +2,17 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { CanvasTexture, SRGBColorSpace, type Mesh } from "three";
+import {
+  AdditiveBlending,
+  Color,
+  DoubleSide,
+  Vector2,
+  Vector3,
+  type Mesh,
+  type ShaderMaterial,
+} from "three";
 import { CHAMBERS, SLIT } from "@/lib/levels";
-import { fringeSpacing } from "@/lib/physics";
+import { wavelengthRgb } from "@/lib/physics";
 import { Dim, SpanRule } from "../Gauge";
 import type { ChamberProps } from "../hall";
 
@@ -13,46 +21,114 @@ const PER_MM = SCREEN_H / SLIT.screenMm;
 const CENTRE_Y = 5.4;
 const SOURCE_X = SLIT.maskX - 5;
 const PULSE = 1.8;
+const SLIT_WIDTH_MM = 0.03;
+const OPEN = 0.16;
+const LASER_LEN = 1.8;
+const MUZZLE = SOURCE_X + LASER_LEN / 2;
+
+const VERT = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+// Two Huygens sources, evaluated per pixel. Amplitude leaves the two drawn
+// apertures and spreads at the real diffraction angle; the phase that sets the
+// fringes comes from the true slit separation, with no small-angle approximation.
+const FRAG = /* glsl */ `
+  precision highp float;
+
+  uniform float uLambda;  // nm
+  uniform float uD;       // mm, slit separation
+  uniform float uA;       // mm, slit width
+  uniform float uGapMm;   // mm, separation as drawn (the holes are exaggerated)
+  uniform float uSpan;    // mm, screen height
+  uniform vec2  uX;       // m, propagation distance mapped across uv.x
+  uniform vec3  uTint;    // sRGB colour of the source
+  uniform float uGain;
+  uniform float uFlash;
+  uniform float uGlow;    // 0 = screen, 1 = additive field slice
+  varying vec2 vUv;
+
+  const float PI = 3.141592653589793;
+
+  void main() {
+    float lambda = uLambda * 1e-9;
+    float d = uD * 1e-3;
+    float a = uA * 1e-3;
+    float y = (vUv.y - 0.5) * uSpan * 1e-3;
+    float x = mix(uX.x, uX.y, vUv.x);
+
+    // the light leaves the apertures where they are drawn, not from the axis
+    float hole = 0.5 * uGapMm * 1e-3;
+    float dy1 = y - hole;
+    float dy2 = y + hole;
+    float r1 = sqrt(x * x + dy1 * dy1);
+    float r2 = sqrt(x * x + dy2 * dy2);
+
+    float b1 = PI * a * dy1 / (lambda * max(r1, 1e-9));
+    float b2 = PI * a * dy2 / (lambda * max(r2, 1e-9));
+    float e1 = abs(b1) < 1e-4 ? 1.0 : sin(b1) / b1;
+    float e2 = abs(b2) < 1e-4 ? 1.0 : sin(b2) / b2;
+
+    // cylindrical waves: amplitude 1/sqrt(r), normalised to the screen plane
+    float a1 = e1 * sqrt(clamp(uX.y / max(r1, 1e-4), 0.0, 2.25));
+    float a2 = e2 * sqrt(clamp(uX.y / max(r2, 1e-4), 0.0, 2.25));
+
+    // fringe phase uses the TRUE separation; (R2 - R1) analytically, because
+    // float32 cannot resolve a micron between two metres
+    float R1 = sqrt(x * x + (y - 0.5 * d) * (y - 0.5 * d));
+    float R2 = sqrt(x * x + (y + 0.5 * d) * (y + 0.5 * d));
+    float phase = PI * (2.0 * y * d / max(R1 + R2, 1e-9)) / lambda;
+
+    // average the cross term over the pixel: <cos(u)> over +-w is cos(u) sin(w)/w
+    float w = fwidth(phase);
+    float coh = w < 1e-4 ? 1.0 : sin(w) / w;
+    float near = smoothstep(0.0, 0.05, vUv.x) * uGlow + (1.0 - uGlow);
+
+    float I = 0.25 * (a1 * a1 + a2 * a2 + 2.0 * a1 * a2 * cos(2.0 * phase) * coh);
+    I *= near * uGain * uFlash;
+    vec3 base = vec3(0.024, 0.035, 0.047) * (1.0 - uGlow);
+
+    gl_FragColor = vec4(pow(base + uTint * I, vec3(2.2)), 1.0);
+  }
+`;
+
+const makeUniforms = (glow: number, gain: number) => ({
+  uLambda: { value: 550 },
+  uD: { value: 0.3 },
+  uA: { value: SLIT_WIDTH_MM },
+  uGapMm: { value: 1 },
+  uSpan: { value: SLIT.screenMm },
+  uX: { value: new Vector2(0, 2.5) },
+  uTint: { value: new Vector3(1, 1, 1) },
+  uGain: { value: gain },
+  uFlash: { value: 1 },
+  uGlow: { value: glow },
+});
 
 export default function Quantum({ level, params, runToken, onFinish, onInteract }: ChamberProps) {
   const tint = CHAMBERS[level.chamber].tint;
 
   const lambda = params.wavelength ?? 550;
   const screenM = params.screen ?? 2.5;
-  const spacing = fringeSpacing(lambda, screenM, params.slit) * 1000;
   const screenX = SLIT.maskX + screenM * SLIT.unitsPerMetre;
 
-  const texture = useMemo(() => {
-    const cv = document.createElement("canvas");
-    cv.width = 2;
-    cv.height = 512;
-    const ctx = cv.getContext("2d");
+  const gap = Math.max(0.3, params.slit * 3.3);
+  const wing = (SCREEN_H - gap - OPEN) / 2;
 
-    if (ctx) {
-      const r = parseInt(tint.slice(1, 3), 16);
-      const g = parseInt(tint.slice(3, 5), 16);
-      const b = parseInt(tint.slice(5, 7), 16);
+  const rgb = wavelengthRgb(lambda);
+  const lit = useMemo(() => new Color(), []);
+  const litHex = `#${lit.setRGB(rgb[0], rgb[1], rgb[2]).getHexString()}`;
 
-      for (let i = 0; i < cv.height; i++) {
-        const yMm = (i / (cv.height - 1) - 0.5) * SLIT.screenMm;
-        const phase = (Math.PI * yMm) / spacing;
-        const arg = (Math.PI * yMm) / (5 * spacing);
-        const env = arg === 0 ? 1 : Math.sin(arg) / arg;
-        const I = Math.cos(phase) ** 2 * env * env;
+  const screenU = useMemo(() => makeUniforms(0, 1), []);
+  const fieldU = useMemo(() => makeUniforms(1, 0.45), []);
 
-        ctx.fillStyle = `rgb(${6 + (r - 6) * I}, ${9 + (g - 9) * I}, ${12 + (b - 12) * I})`;
-        ctx.fillRect(0, i, 2, 1);
-      }
-    }
-
-    const tex = new CanvasTexture(cv);
-    tex.colorSpace = SRGBColorSpace;
-    return tex;
-  }, [spacing, tint]);
-
-  useEffect(() => () => texture.dispose(), [texture]);
-
-  const photon = useRef<Mesh>(null);
+  const pulse = useRef<Mesh>(null);
+  const screenMat = useRef<ShaderMaterial>(null);
+  const fieldMat = useRef<ShaderMaterial>(null);
   const t = useRef(0);
   const live = useRef(false);
 
@@ -62,33 +138,66 @@ export default function Quantum({ level, params, runToken, onFinish, onInteract 
   }, [runToken]);
 
   useFrame((_, dt) => {
-    if (!live.current || !photon.current) return;
+    const knobs = { lambda, slit: params.slit, gapMm: gap / PER_MM, screenM, rgb };
+
+    if (!live.current || !pulse.current) {
+      sync(screenMat, fieldMat, knobs, 1);
+      return;
+    }
     t.current += dt;
 
     const p = Math.min(t.current / PULSE, 1);
-    const leg = p < 0.45 ? p / 0.45 : (p - 0.45) / 0.55;
-    const [ax, bx] =
-      p < 0.45 ? [SOURCE_X, SLIT.maskX] : [SLIT.maskX, screenX];
+    let glare = 1;
 
-    photon.current.position.set(ax + (bx - ax) * leg, CENTRE_Y, 0);
-    photon.current.visible = true;
+    if (p < 0.45) {
+      // the shot is only visible in the collimated stretch; past the slits it is a field, not a ball
+      pulse.current.position.set(MUZZLE + (SLIT.maskX - MUZZLE) * (p / 0.45), CENTRE_Y, 0);
+      pulse.current.visible = true;
+    } else {
+      pulse.current.visible = false;
+      glare = 1 + 2.4 * (1 - (p - 0.45) / 0.55) ** 2;
+    }
+
+    sync(screenMat, fieldMat, knobs, glare);
 
     if (p >= 1) {
       live.current = false;
-      photon.current.visible = false;
       onFinish(level.solve(params));
     }
   });
 
-  const gap = 0.45 + params.slit * 2.4;
-
   return (
     <group>
-      <mesh position={[SOURCE_X, CENTRE_Y, 0]}>
-        <sphereGeometry args={[0.34, 20, 20]} />
-        <meshStandardMaterial color={tint} emissive={tint} emissiveIntensity={1.4} />
-      </mesh>
-      <pointLight position={[SOURCE_X, CENTRE_Y, 0]} color={tint} intensity={9} distance={14} />
+      <group position={[SOURCE_X, CENTRE_Y, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <mesh>
+          <cylinderGeometry args={[0.22, 0.22, LASER_LEN, 20]} />
+          <meshStandardMaterial color="#2b3238" metalness={0.85} roughness={0.38} />
+        </mesh>
+        <mesh position={[0, LASER_LEN / 2 - 0.22, 0]}>
+          <cylinderGeometry args={[0.27, 0.27, 0.2, 20]} />
+          <meshStandardMaterial color="#464f57" metalness={0.9} roughness={0.28} />
+        </mesh>
+        <mesh position={[0, LASER_LEN / 2 + 0.01, 0]}>
+          <cylinderGeometry args={[0.1, 0.1, 0.04, 16]} />
+          <meshStandardMaterial color={litHex} emissive={litHex} emissiveIntensity={2.2} />
+        </mesh>
+        <mesh position={[0, -LASER_LEN / 2 - 0.06, 0]}>
+          <cylinderGeometry args={[0.1, 0.1, 0.12, 12]} />
+          <meshStandardMaterial color="#1a1f24" roughness={0.9} />
+        </mesh>
+      </group>
+      <pointLight position={[MUZZLE, CENTRE_Y, 0]} color={litHex} intensity={3.5} distance={7} />
+
+      <group position={[(MUZZLE + SLIT.maskX) / 2, CENTRE_Y, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <mesh>
+          <cylinderGeometry args={[0.035, 0.035, SLIT.maskX - MUZZLE, 10, 1, true]} />
+          <Air tint={litHex} opacity={0.55} />
+        </mesh>
+        <mesh>
+          <cylinderGeometry args={[0.13, 0.13, SLIT.maskX - MUZZLE, 10, 1, true]} />
+          <Air tint={litHex} opacity={0.07} />
+        </mesh>
+      </group>
 
       <group
         position={[SLIT.maskX, CENTRE_Y, 0]}
@@ -103,31 +212,65 @@ export default function Quantum({ level, params, runToken, onFinish, onInteract 
           document.body.style.cursor = "auto";
         }}
       >
-        <mesh>
-          <boxGeometry args={[0.16, SCREEN_H, 5]} />
-          <meshStandardMaterial color="#0a0e12" roughness={0.85} metalness={0.2} />
-        </mesh>
+        {/* three plates, so the two openings are real holes you can see through */}
+        {[
+          [0, gap - OPEN],
+          [gap / 2 + OPEN / 2 + wing / 2, wing],
+          [-(gap / 2 + OPEN / 2 + wing / 2), wing],
+        ].map(([y, h]) => (
+          <mesh key={`plate-${y}`} position={[0, y, 0]}>
+            <boxGeometry args={[0.16, h, 5]} />
+            <meshStandardMaterial color="#0a0e12" roughness={0.85} metalness={0.2} />
+          </mesh>
+        ))}
         {[gap / 2, -gap / 2].map((y) => (
-          <mesh key={`slit-${y}`} position={[0.1, y, 0]} rotation={[0, Math.PI / 2, 0]}>
-            <planeGeometry args={[4.6, 0.12]} />
-            <meshStandardMaterial
-              color={tint}
-              emissive={tint}
-              emissiveIntensity={1.1}
-              side={2}
-            />
+          <mesh key={`slit-${y}`} position={[0.09, y, 0]} rotation={[0, Math.PI / 2, 0]}>
+            <planeGeometry args={[4.6, OPEN]} />
+            <Air tint={litHex} opacity={0.75} />
           </mesh>
         ))}
       </group>
 
+      <mesh position={[(SLIT.maskX + screenX) / 2, CENTRE_Y, 0]}>
+        <planeGeometry args={[screenX - SLIT.maskX, SCREEN_H]} />
+        <shaderMaterial
+          ref={fieldMat}
+          vertexShader={VERT}
+          fragmentShader={FRAG}
+          uniforms={fieldU}
+          transparent
+          depthWrite={false}
+          blending={AdditiveBlending}
+          side={DoubleSide}
+        />
+      </mesh>
+
       <mesh position={[screenX, CENTRE_Y, 0]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[5, SCREEN_H]} />
-        <meshBasicMaterial map={texture} toneMapped={false} />
+        <shaderMaterial
+          ref={screenMat}
+          vertexShader={VERT}
+          fragmentShader={FRAG}
+          uniforms={screenU}
+          side={DoubleSide}
+        />
       </mesh>
-      <mesh position={[screenX + 0.12, CENTRE_Y, 0]}>
-        <boxGeometry args={[0.16, SCREEN_H + 0.5, 5.4]} />
-        <meshStandardMaterial color="#0a0e12" roughness={0.9} />
-      </mesh>
+      <pointLight
+        position={[screenX - 0.6, CENTRE_Y, 0]}
+        color={litHex}
+        intensity={5}
+        distance={9}
+      />
+      {/* frame only: ground glass reads from both sides, a backing plate would hide it */}
+      {[1, -1].map((side) => (
+        <mesh
+          key={`frame-${side}`}
+          position={[screenX + 0.1, CENTRE_Y + (side * (SCREEN_H + 0.4)) / 2, 0]}
+        >
+          <boxGeometry args={[0.2, 0.4, 5.4]} />
+          <meshStandardMaterial color="#0a0e12" roughness={0.9} />
+        </mesh>
+      ))}
 
       <SpanRule
         gauge={level.gauge}
@@ -156,10 +299,54 @@ export default function Quantum({ level, params, runToken, onFinish, onInteract 
         tint="#7fa9c9"
       />
 
-      <mesh ref={photon} visible={false}>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color="#e4e8ea" emissive="#e4e8ea" emissiveIntensity={1.6} />
+      <mesh ref={pulse} visible={false} rotation={[0, 0, -Math.PI / 2]}>
+        <cylinderGeometry args={[0.075, 0.075, 0.8, 12]} />
+        <meshBasicMaterial color={litHex} toneMapped={false} />
       </mesh>
     </group>
+  );
+}
+
+type MatRef = { current: ShaderMaterial | null };
+type Knobs = {
+  lambda: number;
+  slit: number;
+  gapMm: number;
+  screenM: number;
+  rgb: [number, number, number];
+};
+
+/**
+ * The material keeps its own copy of the uniforms object, so mutating the one we
+ * built in render never reaches the GPU. Every value goes in through the ref.
+ */
+const sync = (screen: MatRef, field: MatRef, k: Knobs, flash: number) => {
+  for (const [ref, from] of [
+    [screen, k.screenM],
+    [field, 0],
+  ] as const) {
+    const u = ref.current?.uniforms;
+    if (!u) continue;
+    u.uLambda.value = k.lambda;
+    u.uD.value = k.slit;
+    u.uGapMm.value = k.gapMm;
+    u.uFlash.value = flash;
+    u.uTint.value.set(...k.rgb);
+    u.uX.value.set(from, k.screenM);
+  }
+};
+
+// a beam is only visible where air scatters it: additive, never occluding
+function Air({ tint, opacity }: { tint: string; opacity: number }) {
+  return (
+    <meshBasicMaterial
+      color={tint}
+      transparent
+      opacity={opacity}
+      blending={AdditiveBlending}
+      depthWrite={false}
+      side={DoubleSide}
+      toneMapped={false}
+    />
   );
 }

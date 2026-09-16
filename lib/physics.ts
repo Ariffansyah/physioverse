@@ -86,3 +86,38 @@ export const dragForce = (v: number, cd: number, area: number, rho = AIR) =>
 
 export const topSpeed = (thrust: number, cd: number, area: number, rho = AIR) =>
   Math.sqrt((2 * thrust) / (rho * cd * area));
+
+
+// CIE-ish piecewise fit (Bruton). Returns sRGB 0..1; black outside the visible band.
+export function wavelengthRgb(nm: number): [number, number, number] {
+  if (nm < 380 || nm > 780) return [0, 0, 0];
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (nm < 440) {
+    r = (440 - nm) / 60;
+    b = 1;
+  } else if (nm < 490) {
+    g = (nm - 440) / 50;
+    b = 1;
+  } else if (nm < 510) {
+    g = 1;
+    b = (510 - nm) / 20;
+  } else if (nm < 580) {
+    r = (nm - 510) / 70;
+    g = 1;
+  } else if (nm < 645) {
+    r = 1;
+    g = (645 - nm) / 65;
+  } else {
+    r = 1;
+  }
+
+  // the eye rolls off at both ends of the band
+  const fade =
+    nm < 420 ? 0.3 + (0.7 * (nm - 380)) / 40 : nm > 700 ? 0.3 + (0.7 * (780 - nm)) / 80 : 1;
+
+  return [r * fade, g * fade, b * fade];
+}

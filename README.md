@@ -219,3 +219,9 @@ terms and privacy pages, and on the screen a frozen account lands on.
   `components/game/`). Nothing is downloaded or imported.
 * Sound is synthesised through the Web Audio API (`lib/sfx.ts`) rather than
   shipped as audio files.
+
+### AI assistance
+
+Claude (Anthropic), through Claude Code, was used for the long and complex parts
+of the build: the 3D chambers, the Postgres schema and RLS policies, the admin
+tables, and the tests.

@@ -14,7 +14,10 @@ export async function createClient() {
         setAll: (list) => {
           try {
             for (const { name, value, options } of list) {
-              cookieStore.set(name, value, options);
+              // Tidak ada klien Supabase di browser, jadi token tidak perlu
+              // terbaca JavaScript. httpOnly menutup pencurian lewat XSS dan
+              // juga jalan pintas menembak REST API langsung dari devtools.
+              cookieStore.set(name, value, { ...options, httpOnly: true });
             }
           } catch {
             // Called while rendering a Server Component, where cookies are

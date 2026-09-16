@@ -15,7 +15,7 @@ export async function proxy(request: NextRequest) {
           for (const { name, value } of list) request.cookies.set(name, value);
           response = NextResponse.next({ request });
           for (const { name, value, options } of list) {
-            response.cookies.set(name, value, options);
+            response.cookies.set(name, value, { ...options, httpOnly: true });
           }
           for (const [key, value] of Object.entries(headers)) {
             response.headers.set(key, value);

@@ -1,6 +1,6 @@
 create table public.profiles (
   id         uuid primary key references auth.users on delete cascade,
-  username   text not null default '',
+  username   text not null default '' check (char_length(username) <= 24),
   role       text not null default 'player' check (role in ('player', 'admin')),
   banned     boolean not null default false,
   created_at timestamptz not null default now()
@@ -56,10 +56,10 @@ create trigger profiles_guard_ban
 create function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare
-  base text := coalesce(
+  base text := left(coalesce(
     nullif(trim(new.raw_user_meta_data ->> 'username'), ''),
     split_part(new.email, '@', 1)
-  );
+  ), 20);
   name text := base;
 begin
   for n in 1..20 loop
@@ -72,7 +72,7 @@ begin
   end loop;
 
   insert into public.profiles (id, username)
-  values (new.id, base || '-' || left(replace(new.id::text, '-', ''), 6));
+  values (new.id, left(base, 14) || '-' || left(replace(new.id::text, '-', ''), 6));
   return new;
 end $$;
 

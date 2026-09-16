@@ -9,12 +9,43 @@ alter table public.profiles
 alter table public.profiles
   add column if not exists banned boolean not null default false;
 
+-- Callsign satu-satunya teks buatan pengguna yang dilihat pengunjung lain, dan
+-- `grant update (username)` berarti ia bisa diset langsung lewat REST API —
+-- tanpa batas ini panjangnya tak terbatas. Potong dulu yang sudah terlanjur.
+update public.profiles set username = left(username, 24) where char_length(username) > 24;
+alter table public.profiles drop constraint if exists profiles_username_check;
+alter table public.profiles
+  add constraint profiles_username_check check (char_length(username) <= 24);
+
 create table if not exists public.notice (
   id         boolean primary key default true check (id),
   body       text not null default '',
   updated_at timestamptz not null default now()
 );
 insert into public.notice (id) values (true) on conflict do nothing;
+
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  base text := left(coalesce(
+    nullif(trim(new.raw_user_meta_data ->> 'username'), ''),
+    split_part(new.email, '@', 1)
+  ), 20);
+  name text := base;
+begin
+  for n in 1..20 loop
+    begin
+      insert into public.profiles (id, username) values (new.id, name);
+      return new;
+    exception when unique_violation then
+      name := base || n::text;
+    end;
+  end loop;
+
+  insert into public.profiles (id, username)
+  values (new.id, left(base, 14) || '-' || left(replace(new.id::text, '-', ''), 6));
+  return new;
+end $$;
 
 create or replace function public.is_admin() returns boolean
 language sql stable security definer set search_path = '' as $$

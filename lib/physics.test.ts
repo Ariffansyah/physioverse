@@ -12,6 +12,7 @@ import {
   orbitPeriod,
   projectile,
   topSpeed,
+  wavelengthRgb,
 } from "./physics.ts";
 import { courtX, courtY } from "./levels.ts";
 
@@ -108,4 +109,19 @@ test("di laju maksimum dorongan mesin persis mengimbangi hambatan", () => {
 
 test("bodi yang lebih licin menaikkan laju maksimum", () => {
   assert.ok(topSpeed(480, 0.24, 2.2) > topSpeed(480, 0.42, 2.2));
+});
+
+test("wavelengthRgb: the band reads red at one end and blue at the other", () => {
+  const [r, g, b] = wavelengthRgb(650);
+  assert.ok(r > 0.9 && g < 0.1 && b === 0, `650 nm -> ${r},${g},${b}`);
+
+  const blue = wavelengthRgb(460);
+  assert.ok(blue[2] > 0.9 && blue[0] === 0);
+
+  assert.ok(wavelengthRgb(520)[1] > 0.9, "520 nm should be green");
+  assert.deepEqual(wavelengthRgb(900), [0, 0, 0]);
+
+  for (const nm of [400, 450, 500, 550, 600, 650, 700]) {
+    for (const c of wavelengthRgb(nm)) assert.ok(c >= 0 && c <= 1, `${nm} nm out of gamut`);
+  }
 });
