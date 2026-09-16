@@ -3,14 +3,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { isMuted, mutedOnServer, play, setMuted, subscribe, unlock } from "@/lib/sfx";
 
-/**
- * Sakelar bunyi. Nilainya hidup di modul sfx, bukan di state komponen, supaya
- * setiap sakelar di layar mana pun menunjukkan keadaan yang sama.
- */
 export default function SoundToggle({ className = "" }: { className?: string }) {
   const off = useSyncExternalStore(subscribe, isMuted, mutedOnServer);
 
-  // Peramban menahan audio sampai ada gerakan pengguna; ini yang membangunkannya.
   useEffect(unlock, []);
 
   return (

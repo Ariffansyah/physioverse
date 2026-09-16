@@ -37,7 +37,6 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
   const [sel, setSel] = useState(0);
   const rows = useRef<(HTMLAnchorElement | null)[]>([]);
 
-  // planet clicks arrive outside React's render, so they read the list through refs
   const at = useRef(sel);
   const jumpTo = useRef<(i: number, quiet?: boolean) => void>(() => {});
 
@@ -53,12 +52,10 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
     jumpTo.current = jump;
   });
 
-  // the list aims the camera
   useEffect(() => {
     setFocus(planetOf(stages[sel].key));
   }, [sel, stages]);
 
-  // every planet carries the mission you are on in that room, or its first one
   useEffect(() => {
     setStops(
       stages
@@ -83,7 +80,6 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
               cta: show.solved ? "ULANGI ▸" : "MAIN ▸",
               tint: s.tint,
             },
-            // same rule as the rows: pick the room first, enter on the second go
             go: () => {
               const here = stages[at.current];
               if (here.key === s.key) {
@@ -98,7 +94,6 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
     );
   }, [stages, sel, router]);
 
-  // and a planet picked in the sky steers the list
   useEffect(
     () =>
       onFocus((planet) => {
@@ -144,7 +139,6 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
   });
 
   return (
-    // narrow on purpose: the planet and its card are the main view, this is the index
     <div className="grid gap-3 px-6 sm:px-10 lg:px-16">
       <ol className="hud max-h-[min(58vh,34rem)] w-full max-w-[24rem] overflow-y-auto bg-graphite/70 p-1.5 backdrop-blur-sm [scrollbar-width:thin]">
         {stages.map((s, i) => {
@@ -165,8 +159,6 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
                 onFocus={(e) => {
                   if (i !== sel && e.currentTarget.matches(":focus-visible")) setSel(i);
                 }}
-                // a tap fires pointerenter and click in one gesture, so on touch the
-                // selection must come from the click alone or the first tap enters
                 onPointerEnter={
                   touch
                     ? undefined
@@ -178,7 +170,6 @@ export default function StageSelect({ stages }: { stages: Stage[] }) {
                       }
                 }
                 onClick={(e) => {
-                  // on a phone there is no planet to pick first: the row opens
                   if (i !== sel && !narrow) {
                     e.preventDefault();
                     jump(i);

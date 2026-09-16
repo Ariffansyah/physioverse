@@ -13,22 +13,16 @@ export type MenuItem = {
   label: string;
   hint: string;
   href: string;
-  /** Index into PLANETS: the camera flies there while this row is picked. */
   planet: number;
-  /** A few words on what is actually behind the door. */
   preview: string[];
 };
 
 export default function MainMenu({ items }: { items: MenuItem[] }) {
   const touch = useTouch();
-  // no hover and no arrow keys on a phone: a row that only opens when "picked"
-  // would leave every row but the first one shut, so the menu goes flat there
   const flat = useNarrow();
   const nav = useRef<HTMLElement>(null);
   const router = useRouter();
 
-  // the store is the single source of truth, so clicking a planet moves the
-  // menu and moving the menu flies the camera, with no second copy of "which"
   const focus = useFocus();
   const sel = Math.max(0, items.findIndex((it) => it.planet === focus));
 

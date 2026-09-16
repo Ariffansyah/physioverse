@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Keeps the Supabase session fresh: pages can read cookies but not write them. */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 

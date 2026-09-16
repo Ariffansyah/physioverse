@@ -1,6 +1,5 @@
 import { CHAMBERS, type ChamberKey } from "@/lib/levels";
 
-/** One body per test chamber, in chamber order: the menus all point at these. */
 const ORBITS = [
   { r: 2.3, size: 0.2, speed: 0.3, tilt: 0.45, roll: 0.1, phase: 0.4, spin: 0.5, ring: false },
   { r: 3.0, size: 0.16, speed: 0.24, tilt: -0.28, roll: -0.2, phase: 2.1, spin: -0.35, ring: false },
@@ -11,7 +10,6 @@ const ORBITS = [
   { r: 7.4, size: 0.18, speed: 0.09, tilt: -0.2, roll: 0.18, phase: 3.0, spin: 0.3, ring: true },
 ];
 
-// Plain data on purpose: the menus read it too, and must not drag three.js in.
 export const PLANETS = (Object.keys(CHAMBERS) as ChamberKey[]).map((key, i) => ({
   chamber: key,
   name: CHAMBERS[key].name,

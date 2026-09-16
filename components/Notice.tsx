@@ -1,10 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Pengumuman dari pengelola situs. Satu baris di database, tampil ke semua
- * pengunjung termasuk yang belum punya akun. Kosong berarti tidak ada apa-apa
- * untuk disampaikan — dan tidak ada yang dirender.
- */
 export default async function Notice() {
   const supabase = await createClient();
   const { data } = await supabase

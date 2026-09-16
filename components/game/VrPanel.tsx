@@ -7,7 +7,6 @@ import { Group, type PerspectiveCamera, Vector3 } from "three";
 
 const scratch = new Vector3();
 
-/** Posisi panel yang sudah digeser, bertahan sampai reload. */
 const seats = new Map<string, Vector3>();
 function seat(id: string | undefined, offset: [number, number, number]) {
   if (!id) return new Vector3(...offset);
@@ -16,7 +15,6 @@ function seat(id: string | undefined, offset: [number, number, number]) {
   return v;
 }
 
-/** Panel HUD yang melayang di depan kamera, menyusul gerak kepala dengan jeda. */
 export function VrPanel({
   offset,
   tilt = [0, 0, 0],
@@ -29,7 +27,6 @@ export function VrPanel({
   tilt?: [number, number, number];
   lag?: number;
   interactive?: boolean;
-  /** Diisi kalau posisi hasil drag harus diingat saat panel dibuka lagi. */
   id?: string;
   children: React.ReactNode;
 }) {
@@ -68,7 +65,6 @@ export function VrPanel({
   const onMove = (e: React.PointerEvent) => {
     const from = drag.current;
     if (!from) return;
-    // meter per piksel layar, di kedalaman panel
     const perPx =
       (2 * Math.abs(spot.current.z) * Math.tan((camera.fov * Math.PI) / 360)) / height;
     const clamp = (v: number, r: number) => Math.max(-r, Math.min(r, v));

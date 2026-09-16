@@ -77,7 +77,6 @@ export default function RoomPicker({ rooms }: { rooms: Room[] }) {
   }, [rooms, sel]);
 
   return (
-    // deliberately narrow: the planet is the main event, this is the index
     <ol
       ref={list}
       className="hud mt-8 w-full max-w-[21rem] bg-graphite/70 p-1.5 backdrop-blur-sm"
@@ -88,7 +87,6 @@ export default function RoomPicker({ rooms }: { rooms: Room[] }) {
           <li key={room.key}>
             <Link
               href={`/belajar/${room.key}`}
-              // on touch pointerenter and click arrive together: let the tap decide
               onPointerEnter={
                 touch
                   ? undefined
@@ -103,7 +101,6 @@ export default function RoomPicker({ rooms }: { rooms: Room[] }) {
                 if (e.currentTarget.matches(":focus-visible")) setFocus(planetOf(room.key));
               }}
               onClick={(e) => {
-                // on a phone there is no planet to pick first: the row opens
                 if (touch && !narrow && !on) {
                   e.preventDefault();
                   play("move");

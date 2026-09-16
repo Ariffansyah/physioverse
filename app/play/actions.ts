@@ -4,10 +4,6 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { getLevel, isSolved, sanitizeParams } from "@/lib/levels";
 
-/**
- * Nilai dihitung ulang di server dari parameter konsol, bukan diterima dari
- * browser — jadi mengarang `solved` di devtools tidak ada gunanya.
- */
 export async function finishRun(levelId: string, rawParams: unknown, elapsedMs: number) {
   const { supabase, profile } = await requireUser();
 

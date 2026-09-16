@@ -3,7 +3,6 @@
 import { useSyncExternalStore } from "react";
 
 const QUERY = "(pointer: coarse)";
-/** Matches Tailwind's `sm` breakpoint: below it the sky needs its own band. */
 const NARROW = "(max-width: 39.99rem)";
 
 const watch = (query: string) => (cb: () => void) => {

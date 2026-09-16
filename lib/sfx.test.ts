@@ -1,11 +1,7 @@
-// node --test lib/sfx.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { CUES, isMuted, setMuted, subscribe } from "./sfx.ts";
 
-// Nadanya dijadwalkan ke jam AudioContext, dan amplopnya pakai ramp
-// eksponensial — yang menolak nilai nol. Satu angka nol atau negatif di tabel
-// ini bikin nada diam atau melempar, dan itu tidak kelihatan sampai diklik.
 test("tiap isyarat punya nada yang bisa dibunyikan", () => {
   for (const [cue, notes] of Object.entries(CUES)) {
     assert.ok(notes.length > 0, `${cue} tidak punya nada`);

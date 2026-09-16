@@ -1,6 +1,3 @@
--- Jalankan ini kalau database sudah pernah diisi schema.sql versi lama
--- (sebelum ada peran pengelola). Project baru cukup schema.sql saja.
--- Aman dijalankan ulang.
 
 alter table public.profiles
   add column if not exists role text not null default 'player'
@@ -9,9 +6,6 @@ alter table public.profiles
 alter table public.profiles
   add column if not exists banned boolean not null default false;
 
--- Callsign satu-satunya teks buatan pengguna yang dilihat pengunjung lain, dan
--- `grant update (username)` berarti ia bisa diset langsung lewat REST API —
--- tanpa batas ini panjangnya tak terbatas. Potong dulu yang sudah terlanjur.
 update public.profiles set username = left(username, 24) where char_length(username) > 24;
 alter table public.profiles drop constraint if exists profiles_username_check;
 alter table public.profiles
@@ -69,8 +63,6 @@ create trigger profiles_guard_ban
   before update on public.profiles
   for each row execute function public.guard_ban();
 
--- Kolom, bukan tabel: kalau seluruh baris boleh di-update, pemain bisa
--- menaikkan dirinya sendiri jadi admin lewat API.
 revoke update on public.profiles from authenticated;
 grant update (username, banned) on public.profiles to authenticated;
 grant delete on public.runs to authenticated;
@@ -81,14 +73,9 @@ alter table public.runs     enable row level security;
 alter table public.profiles enable row level security;
 alter table public.notice   enable row level security;
 
--- Anon tidak punya urusan dengan dua tabel ini; papan rekor lewat view.
 revoke all on public.runs     from anon;
 revoke all on public.profiles from anon;
 
--- Skema lama bisa meninggalkan kebijakan permisif dengan nama yang sudah tidak
--- dipakai lagi, misalnya select `using (true)` di runs dari zaman papan rekor
--- masih membaca tabelnya langsung. Kebijakan itu tetap berlaku walau schema.sql
--- sudah diperbaiki, jadi bersihkan dulu semuanya lalu pasang ulang yang benar.
 do $$
 declare pol record;
 begin
@@ -128,7 +115,6 @@ create policy "notice is public" on public.notice for select to anon, authentica
 create policy "admin writes notice" on public.notice for update to authenticated
   using (public.is_admin()) with check (public.is_admin());
 
--- Akun beku tidak menempati papan rekor.
 create or replace view public.leaderboard with (security_invoker = false) as
 select distinct on (r.level_id)
   r.level_id,
@@ -139,4 +125,3 @@ join public.profiles p on p.id = r.user_id
 where r.solved and not p.banned
 order by r.level_id, r.elapsed_ms asc, r.created_at asc;
 
--- update public.profiles set role = 'admin' where username = 'admin';

@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-/** Satu-satunya jalan pulang, bentuknya sama di tiap layar supaya tidak perlu
-    dicari: tiap halaman yang bukan menu utama memasang ini di kiri atas. */
 export default function MenuLink({ label = "Menu utama" }: { label?: string }) {
   return (
     <Link

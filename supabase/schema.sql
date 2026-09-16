@@ -22,7 +22,6 @@ create table public.runs (
 create index runs_user_level_idx on public.runs (user_id, level_id);
 create index runs_level_time_idx on public.runs (level_id, elapsed_ms) where solved;
 
--- Satu baris, selamanya: pengumuman yang tampil di menu untuk semua pengunjung.
 create table public.notice (
   id         boolean primary key default true check (id),
   body       text not null default '',
@@ -38,8 +37,6 @@ language sql stable security definer set search_path = '' as $$
   )
 $$;
 
--- `role` tidak pernah di-grant ke API, jadi cuma `banned` yang perlu dijaga:
--- tanpa ini pemain yang dibekukan bisa membekukan-balik dirinya jadi normal.
 create function public.guard_ban() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
@@ -82,8 +79,6 @@ create trigger on_auth_user_created
 
 grant select, insert, delete on public.runs to authenticated;
 grant select                 on public.profiles to authenticated;
--- Kolom, bukan tabel: kalau seluruh baris boleh di-update, pemain bisa
--- menaikkan dirinya sendiri jadi admin lewat API.
 grant update (username, banned) on public.profiles to authenticated;
 grant select                 on public.notice   to anon, authenticated;
 grant update                 on public.notice   to authenticated;
@@ -106,8 +101,6 @@ create policy "own runs writable" on public.runs for insert to authenticated
     )
   );
 
--- Peran kedua: pengelola situs. Membaca semua percobaan (dasbor /admin),
--- menghapus rekor yang janggal, membekukan akun, dan menyamarkan callsign.
 create policy "admin reads all runs"  on public.runs for select to authenticated using (public.is_admin());
 create policy "admin deletes runs"    on public.runs for delete to authenticated using (public.is_admin());
 
@@ -131,5 +124,3 @@ order by r.level_id, r.elapsed_ms asc, r.created_at asc;
 
 grant select on public.leaderboard to authenticated;
 
--- Angkat satu akun jadi admin (daftar dulu lewat /auth/login, lalu jalankan ini):
---   update public.profiles set role = 'admin' where username = 'admin';

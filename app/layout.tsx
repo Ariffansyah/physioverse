@@ -21,8 +21,6 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
-/** Dipakai untuk URL absolut di tag Open Graph. Vercel mengisi VERCEL_URL
-    sendiri; set NEXT_PUBLIC_SITE_URL kalau memakai domain sendiri. */
 const site =
   process.env.NEXT_PUBLIC_SITE_URL ??
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");

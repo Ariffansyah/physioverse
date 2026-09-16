@@ -28,8 +28,6 @@ function Sun() {
     const b = body.current;
     if (!s || !b) return;
     const k = STILL ? 1 : 1 - 0.02 ** dt;
-    // flying in among the planets puts the sun close: shrink it to a star
-    // instead of a dinner plate sitting over the menu
     s.scale.x += ((focus >= 0 ? 1.6 : 5.5) - s.scale.x) * k;
     s.scale.y = s.scale.x;
     b.scale.x += ((focus >= 0 ? 0.42 : 1) - b.scale.x) * k;
@@ -147,8 +145,6 @@ function Moon({
           <Halo color={color} size={size * 7} />
 
           {card && !narrow && stop?.card && (
-            // portalled out of the canvas: the starfield sits under a full
-            // layer of interface, and a card painted down there is unclickable
             <Html portal={deck as RefObject<HTMLElement>} center zIndexRange={[40, 0]} pointerEvents="auto">
               <div
                 role="presentation"
@@ -189,7 +185,6 @@ function Moon({
 
           {stop && !narrow && (
             <mesh
-              // the planets are small at this distance; give the pointer a fair target
               onPointerOver={(e) => {
                 if (blocked(e.nativeEvent)) return;
                 e.stopPropagation();
@@ -208,7 +203,6 @@ function Moon({
               }}
             >
               <sphereGeometry args={[Math.max(size * 3.2, 0.55), 16, 12]} />
-              {/* opacity 0, not visible={false}: r3f skips invisible objects when raycasting */}
               <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
           )}
@@ -237,8 +231,6 @@ function Rig({ children }: { children: React.ReactNode }) {
   useFrame(() => {
     const g = pivot.current;
     if (!g) return;
-    // chasing a planet while the whole system also swings under the pointer
-    // reads as seasickness, so the parallax backs off when one is picked
     const sway = focus >= 0 ? 0.25 : 1;
     g.rotation.y += (aim.current.x * 0.3 * sway - g.rotation.y) * 0.035;
     g.rotation.x += (aim.current.y * 0.18 * sway - g.rotation.x) * 0.035;
@@ -252,11 +244,6 @@ function Rig({ children }: { children: React.ReactNode }) {
 }
 
 
-/**
- * The canvas itself cannot take pointer events: it is a background behind a
- * full-screen layer of interface. So r3f listens on the body instead, and this
- * throws away the hits that landed on something the page already handles.
- */
 const blocked = (e: Event) => {
   const el = e.target;
   return el instanceof Element && !!el.closest("a, button, input, label, summary, [role='button']");
@@ -264,10 +251,8 @@ const blocked = (e: Event) => {
 
 const HOME = new Vector3(0, 2.6, 9.5);
 const HOME_LOOK = new Vector3(3.1, 0.4, 0);
-/** Same wide shot, tilted up so the system sits low, under the phone's text. */
 const HOME_LOOK_NARROW = new Vector3(3.1, 3.6, 0);
 
-/** Flies the camera to whichever planet the menu is on, and back out again. */
 function Flight({ seats, narrow }: { seats: RefObject<(Object3D | null)[]>; narrow: boolean }) {
   const focus = useFocus();
   const look = useRef(HOME_LOOK.clone());
@@ -275,15 +260,12 @@ function Flight({ seats, narrow }: { seats: RefObject<(Object3D | null)[]>; narr
   const seat = useRef(new Vector3());
 
   useFrame(({ camera }, dt) => {
-    // a phone screen is all interface: nowhere to park a lit planet, and no
-    // hover to drive it either. The sky stays a wide backdrop there.
     const planet = narrow || focus < 0 ? null : seats.current[focus];
 
     if (planet) {
       planet.getWorldPosition(at.current);
       const back = 1.6 + (PLANETS[focus]?.size ?? 0.2) * 6;
       seat.current.set(at.current.x, at.current.y + 0.35, at.current.z + back);
-      // aim left of the planet so it lands beside the list the page keeps
       at.current.x -= back * 0.16;
     } else {
       at.current.copy(narrow ? HOME_LOOK_NARROW : HOME_LOOK);
@@ -305,9 +287,6 @@ export default function SpaceStage() {
   const stops = useStops();
   const focus = useFocus();
   const narrow = useNarrow();
-  // Handing r3f an eventSource changes the wrapper div's own style, and the
-  // server has no document to name one: the hydration render must still see
-  // undefined, exactly what the server snapshot gives it. Same shape as useTouch.
   const source = useSyncExternalStore(never, () => document.body, () => undefined);
 
   return (
@@ -318,8 +297,6 @@ export default function SpaceStage() {
         gl={{ antialias: false, powerPreference: "high-performance" }}
         camera={{ fov: 50, position: [0, 2.6, 9.5] }}
         eventSource={source}
-        // with an external source the hits arrive on whatever div is on top, so
-        // offsetX/offsetY are relative to the wrong box: use client coordinates
         eventPrefix="client"
       >
         <ambientLight intensity={0.5} />
@@ -348,7 +325,6 @@ export default function SpaceStage() {
         </Rig>
       </Canvas>
       </div>
-      {/* the floating cards land here, above the page, clicks and all */}
       <div ref={deck} aria-hidden="true" className="pointer-events-none fixed inset-0 z-50" />
     </>
   );

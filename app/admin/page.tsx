@@ -48,12 +48,6 @@ export default async function AdminConsole({
   const akunPage = at(Number(sp.akun));
   const href = (runs: number, akun: number) => `/admin?runs=${runs}&akun=${akun}`;
 
-  // Dua tabel di bawah dipenggal 25 baris per halaman lewat `.range()`, jadi
-  // yang diambil cuma sebanyak yang ditampilkan.
-  //
-  // ponytail: ringkasan per misi dan XP per pemain masih dihitung di sini dari
-  // 500 percobaan terakhir, bukan dari seluruh riwayat. Kalau situsnya ramai,
-  // pindahkan dua agregasi itu ke view SQL.
   const [{ data: sample }, logPage, rosterPage, { data: notice }] = await Promise.all([
     supabase
       .from("runs")
@@ -102,8 +96,6 @@ export default async function AdminConsole({
     })
     .sort((a, b) => Number(b.banned) - Number(a.banned) || b.xp - a.xp);
 
-  // Misi yang hampir tidak pernah tuntas biasanya bukan pemainnya yang salah —
-  // toleransinya kesempitan atau slidernya tidak sampai ke jawabannya.
   const offBalance = perLevel
     .filter((r) => r.tries >= 5 && r.wins / r.tries < 0.2)
     .sort((a, b) => a.wins / a.tries - b.wins / b.tries);
@@ -363,7 +355,6 @@ export default async function AdminConsole({
   );
 }
 
-/** Pager 25 baris. Tautan biasa, jadi tidak ada state klien yang perlu diurus. */
 function Pager({
   page,
   count,

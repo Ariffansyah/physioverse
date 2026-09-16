@@ -7,8 +7,6 @@ export default async function PlayLevel(props: PageProps<"/play/[levelId]">) {
   const { levelId } = await props.params;
   await requireUser();
 
-  // Level cuma dilewatkan lewat id: definisinya berisi fungsi `solve`, yang tidak
-  // bisa menyeberangi batas server/client. Klien mengimpor katalognya sendiri.
   if (!getLevel(levelId)) notFound();
 
   return <Game levelId={levelId} />;

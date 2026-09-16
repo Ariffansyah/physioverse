@@ -26,7 +26,7 @@ const OPEN = 0.16;
 const LASER_LEN = 1.8;
 const MUZZLE = SOURCE_X + LASER_LEN / 2;
 
-const VERT = /* glsl */ `
+const VERT = `
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -34,22 +34,19 @@ const VERT = /* glsl */ `
   }
 `;
 
-// Two Huygens sources, evaluated per pixel. Amplitude leaves the two drawn
-// apertures and spreads at the real diffraction angle; the phase that sets the
-// fringes comes from the true slit separation, with no small-angle approximation.
-const FRAG = /* glsl */ `
+const FRAG = `
   precision highp float;
 
-  uniform float uLambda;  // nm
-  uniform float uD;       // mm, slit separation
-  uniform float uA;       // mm, slit width
-  uniform float uGapMm;   // mm, separation as drawn (the holes are exaggerated)
-  uniform float uSpan;    // mm, screen height
-  uniform vec2  uX;       // m, propagation distance mapped across uv.x
-  uniform vec3  uTint;    // sRGB colour of the source
+  uniform float uLambda;
+  uniform float uD;
+  uniform float uA;
+  uniform float uGapMm;
+  uniform float uSpan;
+  uniform vec2  uX;
+  uniform vec3  uTint;
   uniform float uGain;
   uniform float uFlash;
-  uniform float uGlow;    // 0 = screen, 1 = additive field slice
+  uniform float uGlow;
   varying vec2 vUv;
 
   const float PI = 3.141592653589793;
@@ -61,7 +58,6 @@ const FRAG = /* glsl */ `
     float y = (vUv.y - 0.5) * uSpan * 1e-3;
     float x = mix(uX.x, uX.y, vUv.x);
 
-    // the light leaves the apertures where they are drawn, not from the axis
     float hole = 0.5 * uGapMm * 1e-3;
     float dy1 = y - hole;
     float dy2 = y + hole;
@@ -73,17 +69,13 @@ const FRAG = /* glsl */ `
     float e1 = abs(b1) < 1e-4 ? 1.0 : sin(b1) / b1;
     float e2 = abs(b2) < 1e-4 ? 1.0 : sin(b2) / b2;
 
-    // cylindrical waves: amplitude 1/sqrt(r), normalised to the screen plane
     float a1 = e1 * sqrt(clamp(uX.y / max(r1, 1e-4), 0.0, 2.25));
     float a2 = e2 * sqrt(clamp(uX.y / max(r2, 1e-4), 0.0, 2.25));
 
-    // fringe phase uses the TRUE separation; (R2 - R1) analytically, because
-    // float32 cannot resolve a micron between two metres
     float R1 = sqrt(x * x + (y - 0.5 * d) * (y - 0.5 * d));
     float R2 = sqrt(x * x + (y + 0.5 * d) * (y + 0.5 * d));
     float phase = PI * (2.0 * y * d / max(R1 + R2, 1e-9)) / lambda;
 
-    // average the cross term over the pixel: <cos(u)> over +-w is cos(u) sin(w)/w
     float w = fwidth(phase);
     float coh = w < 1e-4 ? 1.0 : sin(w) / w;
     float near = smoothstep(0.0, 0.05, vUv.x) * uGlow + (1.0 - uGlow);
@@ -150,7 +142,6 @@ export default function Quantum({ level, params, runToken, onFinish, onInteract 
     let glare = 1;
 
     if (p < 0.45) {
-      // the shot is only visible in the collimated stretch; past the slits it is a field, not a ball
       pulse.current.position.set(MUZZLE + (SLIT.maskX - MUZZLE) * (p / 0.45), CENTRE_Y, 0);
       pulse.current.visible = true;
     } else {
@@ -212,7 +203,6 @@ export default function Quantum({ level, params, runToken, onFinish, onInteract 
           document.body.style.cursor = "auto";
         }}
       >
-        {/* three plates, so the two openings are real holes you can see through */}
         {[
           [0, gap - OPEN],
           [gap / 2 + OPEN / 2 + wing / 2, wing],
@@ -261,7 +251,6 @@ export default function Quantum({ level, params, runToken, onFinish, onInteract 
         intensity={5}
         distance={9}
       />
-      {/* frame only: ground glass reads from both sides, a backing plate would hide it */}
       {[1, -1].map((side) => (
         <mesh
           key={`frame-${side}`}
@@ -316,10 +305,6 @@ type Knobs = {
   rgb: [number, number, number];
 };
 
-/**
- * The material keeps its own copy of the uniforms object, so mutating the one we
- * built in render never reaches the GPU. Every value goes in through the ref.
- */
 const sync = (screen: MatRef, field: MatRef, k: Knobs, flash: number) => {
   for (const [ref, from] of [
     [screen, k.screenM],
@@ -336,7 +321,6 @@ const sync = (screen: MatRef, field: MatRef, k: Knobs, flash: number) => {
   }
 };
 
-// a beam is only visible where air scatters it: additive, never occluding
 function Air({ tint, opacity }: { tint: string; opacity: number }) {
   return (
     <meshBasicMaterial

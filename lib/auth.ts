@@ -8,7 +8,6 @@ export type Profile = {
   banned: boolean;
 };
 
-/** Satu-satunya gerbang auth. Redirect, bukan return null, biar tak bisa lupa dicek. */
 export async function requireUser() {
   const supabase = await createClient();
   const {
@@ -22,7 +21,6 @@ export async function requireUser() {
     .eq("id", user.id)
     .single<Profile>();
 
-  // Fallback kalau trigger profil belum sempat jalan — jangan sampai loop redirect.
   const profile: Profile = data ?? {
     id: user.id,
     username: user.email?.split("@")[0] ?? "pilot",
@@ -30,8 +28,6 @@ export async function requireUser() {
     banned: false,
   };
 
-  // Akun beku: sesi yang masih hidup pun dijatuhkan di sini, bukan cuma di
-  // tombol masuk. RLS menolaknya lagi di database kalau tetap memaksa lewat API.
   if (profile.banned) {
     await supabase.auth.signOut();
     redirect("/auth/login?banned=1");
@@ -40,7 +36,6 @@ export async function requireUser() {
   return { supabase, profile };
 }
 
-/** Gerbang peran kedua. Pemain biasa dilempar balik ke daftar misinya. */
 export async function requireAdmin() {
   const gate = await requireUser();
   if (gate.profile.role !== "admin") redirect("/play");

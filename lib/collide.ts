@@ -1,9 +1,7 @@
-// Tabrakan AABB untuk pemain dan bola. Murni matematika — diuji di collide.test.ts.
 import { GRAVITY } from "./physics.ts";
 
 export type Point = { x: number; y: number; z: number };
 
-/** Kotak sejajar sumbu: titik tengah + setengah rusuk. */
 export type Box = { x: number; y: number; z: number; hx: number; hy: number; hz: number };
 
 export const box = (x: number, y: number, z: number, hx: number, hy: number, hz: number): Box => ({
@@ -15,10 +13,6 @@ export const box = (x: number, y: number, z: number, hx: number, hy: number, hz:
   hz,
 });
 
-/**
- * Dorong pemain keluar dari kotak lewat sumbu yang tembusnya paling dangkal.
- * Pemain diperlakukan sebagai silinder tegak setinggi mata.
- */
 export function pushOut(p: Point, radius: number, boxes: Box[], top: number) {
   for (const b of boxes) {
     if (b.y - b.hy > top || b.y + b.hy < 0) continue;
@@ -32,7 +26,6 @@ export function pushOut(p: Point, radius: number, boxes: Box[], top: number) {
   }
 }
 
-/** Ada yang tersentuh kotak? Dipakai untuk menyerahkan lintasan analitik ke fisika. */
 export function touches(x: number, y: number, z: number, r: number, boxes: Box[]) {
   return boxes.some(
     (k) => Math.abs(x - k.x) < k.hx + r && Math.abs(y - k.y) < k.hy + r && Math.abs(z - k.z) < k.hz + r,
@@ -45,7 +38,6 @@ export type Body = {
   r: number;
 };
 
-/** Pantulkan bola dari satu kotak. Bola didekati sebagai kotak juga — cukup untuk clank. */
 function hitBox(b: Body, k: Box, e: number) {
   const dx = b.p.x - k.x;
   const dy = b.p.y - k.y;
@@ -67,14 +59,6 @@ function hitBox(b: Body, k: Box, e: number) {
   return true;
 }
 
-/**
- * Satu langkah integrasi bola: gravitasi, pantul lantai, pantul kotak, gesekan
- * gelinding. Dipakai setelah lintasan analitik selesai — nilai misi tetap dari
- * `level.solve`, ini murni kelanjutan yang kelihatan.
- *
- * ponytail: Euler + AABB, tanpa rotasi dan tanpa CCD. Bola cepat bisa tembus
- * kotak tipis; ganti ke swept test kalau itu kelihatan.
- */
 export function stepBody(
   b: Body,
   dt: number,
@@ -102,7 +86,6 @@ export function stepBody(
   for (const k of boxes) hitBox(b, k, restitution);
 }
 
-/** Pemain menyenggol bola yang sudah menggelinding. */
 export function nudge(b: Body, eye: Point, reach = 0.6, force = 3.5) {
   const dx = b.p.x - eye.x;
   const dz = b.p.z - eye.z;

@@ -13,7 +13,6 @@ const SPRINT = 11;
 const UP = new Vector3(0, 1, 0);
 const BODY_R = 0.42;
 
-/** Kontroler orang pertama: WASD + geser mouse, tabrakan AABB tanpa engine fisika. */
 export function Player({ active, level }: { active: boolean; level: Level; onNear?: (near: boolean) => void }) {
   const solids = useMemo(() => solidsFor(level), [level]);
   const keys = useRef(new Set<string>());
@@ -38,13 +37,11 @@ export function Player({ active, level }: { active: boolean; level: Level; onNea
     };
   }, []);
 
-  // Kamera diambil dari state useFrame, bukan dari useThree: kontroler orang
-  // pertama memang menulis langsung ke transform kamera tiap frame.
   useFrame(({ camera }, dt) => {
     if (!spawned.current) {
       spawned.current = true;
       camera.position.set(...SPAWN);
-      camera.rotation.set(0, -Math.PI / 2, 0, "YXZ"); // menghadap +X, ke arah aula
+      camera.rotation.set(0, -Math.PI / 2, 0, "YXZ");
     }
 
     const k = keys.current;
@@ -70,7 +67,7 @@ export function Player({ active, level }: { active: boolean; level: Level; onNea
       pushOut(camera.position, BODY_R, solids, EYE);
       bob.current += speed * 2.2;
     } else {
-      bob.current += dt * 0.6; // napas pelan saat diam
+      bob.current += dt * 0.6;
     }
 
     camera.position.y = EYE + Math.sin(bob.current) * 0.045;

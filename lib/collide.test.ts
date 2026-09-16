@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { box, nudge, pushOut, stepBody, touches, type Body } from "./collide.ts";
 
-const wall = box(0, 1, 0, 0.2, 1, 2); // tipis di x, panjang di z
+const wall = box(0, 1, 0, 0.2, 1, 2);
 
 test("pemain terdorong keluar lewat sumbu tersempit", () => {
-  const p = { x: 0.1, y: 1.7, z: 0 }; // tembus dari sisi +x
+  const p = { x: 0.1, y: 1.7, z: 0 };
   pushOut(p, 0.4, [wall], 1.7);
   assert.ok(Math.abs(p.x - 0.6) < 1e-9, `di ${p.x}, harusnya hx + radius`);
   assert.equal(p.z, 0, "sumbu z yang tembusnya lebih dalam tidak ikut digeser");

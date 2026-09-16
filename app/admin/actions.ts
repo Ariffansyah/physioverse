@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 
-/** Papan rekor publik: hapus catatan waktu yang janggal. */
 export async function deleteRun(formData: FormData) {
   const { supabase } = await requireAdmin();
 
@@ -17,7 +16,6 @@ export async function deleteRun(formData: FormData) {
   revalidatePath("/play");
 }
 
-/** Bekukan / pulihkan akun. Yang beku tidak bisa main dan hilang dari papan rekor. */
 export async function setBan(formData: FormData) {
   const { supabase, profile } = await requireAdmin();
 
@@ -34,10 +32,6 @@ export async function setBan(formData: FormData) {
   revalidatePath("/play");
 }
 
-/**
- * Callsign satu-satunya teks buatan pengguna yang tampil ke pengunjung lain.
- * Tombol ini menggantinya dengan nama netral, bukan menghapus akunnya.
- */
 export async function maskCallsign(formData: FormData) {
   const { supabase } = await requireAdmin();
 
@@ -52,7 +46,6 @@ export async function maskCallsign(formData: FormData) {
   revalidatePath("/play");
 }
 
-/** Pengumuman satu baris yang tampil di menu untuk semua pengunjung. Kosong = mati. */
 export async function setNotice(formData: FormData) {
   const { supabase } = await requireAdmin();
 
