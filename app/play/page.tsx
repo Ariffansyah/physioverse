@@ -1,4 +1,5 @@
 import Colophon from "@/components/Colophon";
+import Notice from "@/components/Notice";
 import SpaceStage from "@/components/SpaceStage";
 import StageSelect, { type Stage } from "@/components/StageSelect";
 import TopBar from "@/components/TopBar";
@@ -67,6 +68,7 @@ export default async function ChamberSelect() {
     <>
       <SpaceStage />
       <div className="relative z-2 flex min-h-svh flex-col sm:grid sm:h-svh sm:grid-cols-[minmax(0,1fr)] sm:grid-rows-[auto_1fr_auto] sm:overflow-hidden">
+        <Notice />
         <TopBar
           profile={profile}
           rank={rankFor(xp)}

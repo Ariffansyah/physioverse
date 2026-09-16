@@ -27,7 +27,8 @@ export default function Privasi() {
         {
           head: "Siapa yang bisa melihat apa",
           body: [
-            "Catatan percobaanmu hanya bisa dibaca oleh akunmu sendiri. Pembatasannya ditegakkan di tingkat basis data, bukan hanya di tampilan.",
+            "Sesama pemain tidak bisa membaca catatan percobaanmu. Pembatasannya ditegakkan di tingkat basis data, bukan hanya di tampilan.",
+            "Pengecualiannya satu: pengelola situs bisa melihat daftar percobaan seluruh pemain — misi apa, berhasil atau tidak, dan kapan — untuk merapikan papan rekor dan memperbaiki misi yang timpang. Emailmu tetap tidak ikut terlihat, bahkan oleh pengelola.",
             "Papan rekor hanya mengeluarkan dua hal ke pemain lain: nama panggilan pemegang waktu tercepat per misi, dan waktunya. Nilai, jumlah percobaan, dan email tidak pernah ikut keluar.",
           ],
         },
@@ -36,6 +37,13 @@ export default function Privasi() {
           body: [
             "Di satu basis data Postgres yang dikelola Supabase. Tidak ada salinan yang dikirim ke layanan lain.",
             "Huruf dimuat dari Google Fonts, yang berarti perambanmu menghubungi server mereka saat halaman dibuka.",
+          ],
+        },
+        {
+          head: "Kalau akun dibekukan",
+          body: [
+            "Pengelola bisa membekukan akun yang melanggar ketentuan. Akun beku tidak bisa membuka misi dan tidak muncul di papan rekor, tapi datanya tidak dihapus — kalau pembekuannya keliru, semuanya kembali utuh.",
+            "Nama panggilan yang kasar bisa diganti dengan nama netral. Yang berubah cuma namanya; catatan percobaan dan XP-mu tetap.",
           ],
         },
         {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import MenuLink from "@/components/MenuLink";
 import { signOut } from "@/app/auth/actions";
 import type { Profile } from "@/lib/auth";
@@ -44,6 +45,15 @@ export default function TopBar({
               {xp}/{totalXp}
             </span>
           </div>
+        )}
+
+        {profile.role === "admin" && (
+          <Link
+            href="/admin"
+            className="font-mono text-[11px] tracking-[0.18em] text-champagne transition-colors duration-500 ease-settle hover:text-starlight"
+          >
+            KONSOL
+          </Link>
         )}
 
         <form action={signOut}>

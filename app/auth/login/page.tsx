@@ -3,7 +3,13 @@ import SoundToggle from "@/components/SoundToggle";
 import SpaceStage from "@/components/SpaceStage";
 import LoginForm from "./LoginForm";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ banned?: string }>;
+}) {
+  const banned = (await searchParams).banned === "1";
+
   return (
     <main className="relative z-2 grid min-h-svh grid-rows-[auto_1fr_auto] px-6 sm:px-10 lg:px-16">
       <SpaceStage />
@@ -11,7 +17,13 @@ export default function LoginPage() {
         <MenuLink />
       </header>
 
-      <div className="grid place-items-center py-8">
+      <div className="grid place-items-center gap-5 py-8">
+        {banned && (
+          <p className="w-full max-w-sm border-l border-oxide pl-4 text-sm leading-relaxed text-oxide">
+            Akun ini dibekukan oleh pengelola, jadi misinya tidak bisa dibuka.
+            Kalau menurutmu ini keliru, hubungi kontak di halaman Privasi.
+          </p>
+        )}
         <LoginForm />
       </div>
 

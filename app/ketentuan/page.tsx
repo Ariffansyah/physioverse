@@ -17,6 +17,7 @@ export default function Ketentuan() {
           body: [
             "Satu akun berisi email, kata sandi, dan satu nama panggilan. Nama panggilan tampil di papan rekor, jadi jangan pakai nama asli kalau kamu tidak mau terlihat orang lain.",
             "Kalau nama panggilan yang kamu pilih sudah dipakai, sistem menambahkan angka di belakangnya dan pendaftaran tetap berhasil.",
+            "Nama panggilan adalah satu-satunya tulisanmu yang terbaca pengunjung lain. Kalau isinya kasar atau menyamar jadi orang lain, pengelola menggantinya dengan nama netral tanpa menghapus akun dan kemajuanmu.",
           ],
         },
         {
@@ -38,6 +39,14 @@ export default function Ketentuan() {
           body: [
             "Silakan memakai, mempelajari, dan membicarakan hasilnya. Jangan menjalankan skrip otomatis untuk mengisi papan rekor, dan jangan mencoba menulis catatan percobaan atas nama pemain lain.",
             "Penilaian dihitung ulang di server dari parameter konsolmu, jadi mengubah nilai lewat peramban tidak mengubah apa pun kecuali membuang waktumu.",
+            "Akun yang tetap melanggar bisa dibekukan pengelola: misinya tidak bisa dibuka dan catatannya hilang dari papan rekor. Datanya tidak dihapus, jadi pembekuan bisa dibatalkan kalau memang keliru.",
+          ],
+        },
+        {
+          head: "Kode sumber dan lisensi",
+          body: [
+            "Seluruh kode situs ini terbuka di bawah Lisensi MIT. Kamu boleh membacanya, menyalinnya, mengubahnya, dan memakainya di kelasmu sendiri, asal pemberitahuan hak cipta dan teks lisensinya ikut dibawa.",
+            "Lisensi itu menyangkut kodenya. Akun, catatan percobaan, dan papan rekor tetap milik pemainnya masing-masing dan tidak ikut dilisensikan.",
           ],
         },
         {
