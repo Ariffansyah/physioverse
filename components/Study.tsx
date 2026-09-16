@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Loading from "@/components/Loading";
 import MenuLink from "@/components/MenuLink";
 import { CHAMBERS, LEVELS, getLevel, type ChamberKey } from "@/lib/levels";
@@ -23,18 +23,21 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
     ...lesson.defaults,
   }));
   const [ready, setReady] = useState(false);
+  const [live, setLive] = useState(false);
+  const goLive = useCallback(() => setLive(true), []);
   const [runToken, setRunToken] = useState(0);
   const [knobs, setKnobs] = useState(true);
   const [reading, setReading] = useState<number | null>(null);
 
 
   useEffect(() => {
+    if (!live) return;
     const id = setTimeout(() => {
       setReading(null);
       setRunToken((t) => t + 1);
     }, 420);
     return () => clearTimeout(id);
-  }, [params]);
+  }, [params, live]);
 
   const steps = lesson.steps(params, level);
 
@@ -51,7 +54,7 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
         />
 
         <div className="pointer-events-none absolute inset-0 z-[70]">
-          <Loading label="Menyiapkan simulasi" done={ready} />
+          <Loading label="Menyiapkan simulasi" done={ready} onGone={goLive} />
         </div>
 
         <div className="absolute left-4 top-4 flex items-center gap-4">
@@ -68,7 +71,6 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
         </div>
 
 
-        {/* z-30: the 3D labels ride at 20 and would otherwise print over this */}
         <div className="hud absolute inset-x-4 bottom-4 z-30 grid gap-3 bg-graphite/90 p-4 backdrop-blur-sm sm:inset-x-auto sm:left-4 sm:w-[20rem]">
           <p className="tag hidden sm:block">Atur sendiri</p>
           <button

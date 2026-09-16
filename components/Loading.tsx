@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/** Held on screen this long after the thing we were waiting for is ready. */
-const HOLD_MS = 3500;
+const HOLD_MS = 4100;
 const FADE_MS = 700;
+const MIN_MS = 1400;
 
 const TIPS = [
   "Tanpa hambatan udara, lemparan terjauh selalu jatuh di sudut 45 derajat.",
@@ -16,9 +16,7 @@ const TIPS = [
   "Yang menentukan tinggi puncak lemparan cuma komponen tegak kecepatannya.",
 ];
 
-// Deterministic so the server and the client draw the same sky. Golden angle
-// spreads the streaks without clumping; the rest is index arithmetic.
-const STREAKS = Array.from({ length: 120 }, (_, i) => ({
+const STREAKS = Array.from({ length: 88 }, (_, i) => ({
   angle: (i * 137.508) % 360,
   dur: 0.9 + ((i * 7) % 12) / 10,
   delay: -(((i * 13) % 21) / 10),
@@ -29,19 +27,21 @@ const STREAKS = Array.from({ length: 120 }, (_, i) => ({
 export default function Loading({
   label = "Menyiapkan ruang uji",
   done,
+  onGone,
 }: {
   label?: string;
-  /**
-   * Flip to true when the real work finished: the warp still runs HOLD_MS more.
-   * Leave it out entirely when nobody can report completion — a route-level
-   * fallback is yanked by React at any moment, and a numbered bar cut off at
-   * 30% reads as broken. Those get the sweep instead.
-   */
   done?: boolean;
+  onGone?: () => void;
 }) {
   const [tip, setTip] = useState(0);
   const [gone, setGone] = useState(false);
+  const [ripe, setRipe] = useState(false);
   const bar = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => setRipe(true), MIN_MS);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setTip((n) => n + 1), 3400);
@@ -49,35 +49,38 @@ export default function Loading({
   }, []);
 
   const tracked = done !== undefined;
+  const leaving = !!done && ripe;
 
-  // Both halves run on the compositor on purpose: booting a 3D scene blocks the
-  // main thread for seconds, and anything driven from there — a timer, or a
-  // keyframe carrying a var() — freezes exactly when the user is watching.
-  // WAAPI takes the current scale as its implicit start, so no snap either.
   useEffect(() => {
-    if (!done || !bar.current) return;
+    if (!leaving || !bar.current) return;
     const run = bar.current.animate([{ transform: "scaleX(1)" }], {
       duration: 700,
       easing: "cubic-bezier(.2,.8,.3,1)",
       fill: "forwards",
     });
     return () => run.cancel();
-  }, [done]);
+  }, [leaving]);
 
   useEffect(() => {
-    if (!done) return;
-    const id = setTimeout(() => setGone(true), HOLD_MS);
+    if (!leaving) return;
+    const id = setTimeout(() => {
+      setGone(true);
+      onGone?.();
+    }, HOLD_MS);
     return () => clearTimeout(id);
-  }, [done]);
+  }, [leaving, onGone]);
 
   if (gone) return null;
 
   return (
     <div
-      className={`pointer-events-auto relative z-2 grid size-full place-items-center overflow-hidden bg-well px-6 py-16 transition-opacity ease-settle ${done ? "opacity-0" : "opacity-100"}`}
-      style={{ transitionDuration: `${FADE_MS}ms`, transitionDelay: done ? `${HOLD_MS - FADE_MS}ms` : "0ms" }}
+      className={`pointer-events-auto relative z-2 grid size-full place-items-center overflow-hidden bg-well px-6 py-16 transition-opacity ease-settle ${leaving ? "opacity-0" : "opacity-100"}`}
+      style={{
+        transitionDuration: `${FADE_MS}ms`,
+        transitionDelay: leaving ? `${HOLD_MS - FADE_MS}ms` : "0ms",
+      }}
     >
-      <div className={`warp ${done ? "warp-out" : ""}`} aria-hidden="true">
+      <div className={`warp ${leaving ? "warp-out" : ""}`} aria-hidden="true">
         {STREAKS.map((s) => (
           <i
             key={s.angle}
@@ -94,13 +97,13 @@ export default function Loading({
         ))}
       </div>
 
-      <div className="relative grid w-full max-w-md gap-5">
+      <div className="load-panel relative grid w-full max-w-md gap-5">
         <p className="tag">Physioverse</p>
-        <p className="font-serif text-2xl leading-tight text-starlight">{label}</p>
+        <p className="halo font-serif text-2xl leading-tight text-starlight">{label}</p>
         <div className="meter">
           {tracked ? <i ref={bar} className="crawl" /> : <i className="sweep" />}
         </div>
-        <p className="min-h-[4.5rem] text-[14px] leading-relaxed text-ash">
+        <p key={tip} className="tip-in min-h-[4.5rem] text-[14px] leading-relaxed text-ash">
           <span className="text-ashdim">Sambil menunggu: </span>
           {TIPS[tip % TIPS.length]}
         </p>
