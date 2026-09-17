@@ -4,7 +4,7 @@ import { CHAMBERS, LEVELS } from "@/lib/levels";
 export const metadata = {
   title: "Tentang",
   description:
-    "Laboratorium fisika 3D untuk anak SMA: belajar lewat simulasi yang bisa diatur, lalu uji hitunganmu sendiri lewat misi.",
+    "PhysioVerse adalah laboratorium fisika 3D untuk anak SMA: belajar lewat simulasi yang bisa diatur, lalu uji hitunganmu sendiri lewat misi.",
 };
 
 const rooms = Object.keys(CHAMBERS).length;
@@ -14,8 +14,8 @@ export default function About() {
     <LegalPage
       chip="Tentang"
       eyebrow="Tentang"
-      title="Apa itu PhysioVerse"
-      standfirst="Laboratorium fisika 3D untuk anak SMA. Dibuat supaya rumus yang biasanya cuma berbentuk tulisan di papan tulis bisa kamu lihat bentuknya, kamu geser angkanya, dan kamu lihat akibatnya."
+      title="Apa itu PhysioVerse?"
+      standfirst="PhysioVerse adalah laboratorium fisika 3D untuk anak SMA. Dibuat supaya rumus yang biasanya cuma berbentuk tulisan di papan tulis bisa kamu lihat bentuknya, kamu geser angkanya, dan kamu lihat akibatnya."
       clauses={[
         {
           head: "Dua cara memakainya",
