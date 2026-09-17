@@ -91,13 +91,6 @@ export default function Game({
     if (!touch) setTimeout(() => controls.current?.lock(), 60);
   };
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("autotest")) {
-      setStartedAt(performance.now());
-      setTimeout(() => setDockOpen(true), 300);
-    }
-  }, []);
-
   const run = () => {
     setDockOpen(false);
     setRunning(true);
@@ -148,7 +141,7 @@ export default function Game({
   } as const;
 
   return (
-    <div className="relative z-2 h-[100dvh] w-full overflow-hidden">
+    <main className="relative z-2 h-[100dvh] w-full overflow-hidden">
       <div id="play-surface" className="absolute inset-0">
         <World
           levelId={level.id}
@@ -219,6 +212,6 @@ export default function Game({
         />
       )}
 
-    </div>
+    </main>
   );
 }

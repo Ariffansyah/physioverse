@@ -111,6 +111,29 @@ Both are meant to be public. What protects the data is RLS, not the secrecy of
 the key. The `service_role` key is not used anywhere and does not belong in this
 file.
 
+### Deploying your own
+
+The live site runs on Vercel, and nothing in the repository is specific to it
+beyond `vercel.json`, which only pins the serverless region to Singapore.
+
+1. Set up Supabase first, steps 1 and 2 of [Running it locally](#running-it-locally).
+   The same database serves the deployment.
+2. Import the repository at [vercel.com/new](https://vercel.com/new). The
+   framework, the build command (`next build`), and the output are all detected;
+   nothing needs to be filled in by hand.
+3. Under Settings, Environment Variables, add `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` for Production, Preview, and Development.
+   Deploy.
+4. On a custom domain, add `NEXT_PUBLIC_SITE_URL` as well, so the Open Graph
+   image resolves against the right host. On a `*.vercel.app` URL, skip it.
+5. Register the two accounts on the deployed site and run the promote statement
+   from [Demo accounts](#demo-accounts).
+
+Any Node host works the same way: `pnpm install && pnpm build && pnpm start`
+with those variables in the environment. There is no server state to keep, no
+file uploads, and no background job, so a fresh container can replace a running
+one at any time.
+
 ## Playing it
 
 **Learning mode** (`/belajar`) needs no account. Pick a chamber, drag a knob, and
@@ -166,7 +189,7 @@ The tests check that every mission is actually solvable with the sliders it
 ships with, and that none of them can be passed by leaving the defaults alone:
 
 ```bash
-node --test lib/physics.test.ts lib/levels.test.ts lib/collide.test.ts lib/sfx.test.ts
+pnpm test   # node --test lib/*.test.ts, 136 assertions, no framework
 ```
 
 ## Data and security

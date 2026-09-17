@@ -19,7 +19,7 @@ export default function TopBar({
     <header className="relative z-2 flex flex-col gap-3 border-b border-rule bg-obsidian/70 px-6 py-4 backdrop-blur-sm sm:flex-row sm:items-center sm:gap-x-8 sm:px-10 lg:px-16">
       <MenuLink />
 
-      <div className="flex flex-1 items-center justify-between gap-x-6 gap-y-2 overflow-x-auto sm:justify-end">
+      <div className="flex flex-1 flex-wrap items-center justify-between gap-x-6 gap-y-2 sm:flex-nowrap sm:justify-end">
         <span className="tag">Pilot</span>
         <span className="text-sm text-starlight">{profile.username}</span>
         {rank && <span className="chip [--tint:var(--color-champagne)]">{rank}</span>}

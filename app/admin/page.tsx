@@ -33,6 +33,11 @@ const DAY = 86_400_000;
 const PAGE = 25;
 const SAMPLE = 500;
 
+const activeLastWeek = (log: Run[]) => {
+  const since = Date.now() - 7 * DAY;
+  return new Set(log.filter((r) => Date.parse(r.created_at) > since).map((r) => r.user_id)).size;
+};
+
 const at = (p: number) => Math.max(1, Number(p) || 1);
 const span = (page: number) => [(page - 1) * PAGE, page * PAGE - 1] as const;
 
@@ -100,10 +105,7 @@ export default async function AdminConsole({
     .filter((r) => r.tries >= 5 && r.wins / r.tries < 0.2)
     .sort((a, b) => a.wins / a.tries - b.wins / b.tries);
 
-  const since = Date.now() - 7 * DAY;
-  const active = new Set(
-    log.filter((r) => Date.parse(r.created_at) > since).map((r) => r.user_id),
-  ).size;
+  const active = activeLastWeek(log);
 
   const totals = [
     ["Akun", `${rosterPage.count ?? roster.length}`],

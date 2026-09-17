@@ -104,24 +104,6 @@ export function ClueCard({ level }: { level: Level }) {
   );
 }
 
-export function Prompt({ show, text }: { show: boolean; text?: string }) {
-  const touch = useTouch();
-  const say = text ?? (touch ? "Ketuk alatnya untuk mengatur" : "Tekan E untuk atur");
-  if (!show) return null;
-  return (
-    <div className="pointer-events-none absolute bottom-28 left-1/2 -translate-x-1/2">
-      <div className="hud flex items-center gap-3 px-5 py-3">
-        {!touch && (
-          <kbd className="rounded-md border border-champagne/45 px-2 py-0.5 font-mono text-[11px] text-champagne">
-            E
-          </kbd>
-        )}
-        <span className="text-sm text-ash">{say}</span>
-      </div>
-    </div>
-  );
-}
-
 const KEYS: [string, string][] = [
   ["W A S D", "jalan"],
   ["SHIFT", "lari"],
@@ -202,24 +184,6 @@ export function Briefing({ level, onEnter }: { level: Level; onEnter: () => void
             Batal
           </Link>
         </div>
-      </div>
-    </Overlay>
-  );
-}
-
-export function Resume({ onResume }: { onResume: () => void }) {
-  return (
-    <Overlay onClick={onResume}>
-      <div className="text-center">
-        <p className="font-serif text-3xl text-starlight">Klik untuk lanjut</p>
-        <p className="mt-3 text-sm text-ashdim">Kursor dilepas. Klik lagi untuk mengunci.</p>
-        <Link
-          href="/play"
-          onClick={(e) => e.stopPropagation()}
-          className="mt-8 inline-block border-b border-transparent pb-1 text-sm text-ashdim"
-        >
-          Keluar ke daftar misi
-        </Link>
       </div>
     </Overlay>
   );
@@ -653,12 +617,9 @@ export function TweakPanel({
   );
 }
 
-function Overlay({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+function Overlay({ children }: { children: React.ReactNode }) {
   return (
-
-
     <div
-      onClick={onClick}
       className="absolute inset-0 z-20 overflow-y-auto overscroll-contain p-4 sm:p-6"
       style={{ background: "rgb(4 6 9 / 0.82)" }}
     >

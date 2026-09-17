@@ -43,7 +43,10 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
 
   return (
     <div className="relative z-2 flex min-h-svh flex-col lg:h-svh lg:grid lg:grid-cols-[minmax(0,1fr)_27rem] lg:overflow-hidden">
-      <div className="relative h-[64vh] min-h-0 overflow-hidden sm:overflow-visible lg:h-auto">
+      <section
+        aria-label="Simulasi"
+        className="relative h-[64vh] min-h-0 overflow-hidden sm:overflow-visible lg:h-auto"
+      >
         <World
           levelId={level.id}
           params={params}
@@ -125,9 +128,9 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
           </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      <aside className="flex min-h-0 flex-col border-rule bg-obsidian/85 backdrop-blur-sm lg:border-l lg:overflow-y-auto">
+      <main className="flex min-h-0 flex-col border-rule bg-obsidian/85 backdrop-blur-sm lg:border-l lg:overflow-y-auto">
         <div className="grid gap-4 border-b border-rule p-6">
           <p className="tag" style={{ color: room.tint }}>
             {room.name}
@@ -188,7 +191,7 @@ export default function Study({ chamber }: { chamber: ChamberKey }) {
             Coba misinya
           </Link>
         </div>
-      </aside>
+      </main>
     </div>
   );
 }

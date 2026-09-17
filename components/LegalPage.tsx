@@ -39,7 +39,7 @@ export default function LegalPage({
               className="hud bracket grid content-start gap-3 p-6 transition-colors duration-500 ease-settle hover:border-quantum-deep"
             >
               <div className="flex items-baseline gap-4">
-                <span className="font-mono text-[1.6rem] leading-none tabular-nums text-ashdim/35">
+                <span className="font-mono text-[1.6rem] leading-none tabular-nums text-ashdim/70">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <h2 className="flex-1 font-serif text-xl font-light leading-snug text-starlight">

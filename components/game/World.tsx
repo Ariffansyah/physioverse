@@ -153,7 +153,17 @@ export default function World({
           onLock={onLock}
           onUnlock={onUnlock}
           ref={(instance) => {
-            if (controlsRef) controlsRef.current = instance;
+            if (!controlsRef) return;
+            // three calls requestPointerLock() and drops the promise. Chrome rejects it
+            // during the cooldown right after ESC, so catch it here instead of letting it
+            // surface as an uncaught error.
+            controlsRef.current = instance && {
+              lock: () => {
+                const asked: unknown = instance.domElement?.requestPointerLock();
+                if (asked instanceof Promise) asked.catch(() => {});
+              },
+              unlock: () => instance.unlock(),
+            };
           }}
         />
       )}
