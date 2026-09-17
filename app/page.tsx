@@ -52,7 +52,7 @@ export default async function Landing() {
         ]),
     {
       label: "Tentang",
-      hint: "isi situs ini",
+      hint: "apa itu PhysioVerse",
       href: "/tentang",
       planet: planetOf("gravity"),
       preview: ["kenapa dibuat", "sumber & lisensi", "kontak"],
@@ -68,7 +68,7 @@ export default async function Landing() {
 
         <div className="relative mx-auto grid w-full max-w-[1480px] items-end gap-8 self-center py-10 sm:gap-10 sm:py-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <div>
-            <p className="tag">Game fisika 3D</p>
+            <p className="tag">Game Fisika 3D</p>
             <h1 className="halo mt-5 text-[clamp(2.5rem,1.1rem+7vw,min(6.5rem,14vh))] leading-[0.95] tracking-[-0.03em]">
               PhysioVerse
             </h1>
@@ -76,7 +76,7 @@ export default async function Landing() {
               Into the Physics Verse
             </p>
             <p className="mt-5 max-w-[48ch] text-[17px] leading-relaxed text-ash">
-              Belajar fisika SMA di dalam lab 3D. Geser alatnya, lihat apa yang berubah,
+              Belajar fisika secara 3D tanpa alat. Geser alatnya, lihat apa yang berubah,
               dan baca hitungannya langsung di layar. Setelah paham, uji hitunganmu sendiri
               lewat {LEVELS.length} misi di {chambers} ruang uji.
             </p>
