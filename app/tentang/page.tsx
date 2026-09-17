@@ -25,10 +25,10 @@ export default function About() {
           ],
         },
         {
-          head: "Kenapa dibuat begini",
+          head: "Antara hafalan dan pemahaman",
           body: [
-            "Rumus gampang dihafal dan susah dibayangkan. Kalau sudut tembak dinaikkan, apanya yang berubah, dan kenapa jarak terjauh selalu jatuh di 45 derajat?",
-            "Menggeser satu kenop lalu melihat lintasannya berubah menjawab pertanyaan itu lebih cepat daripada satu halaman penjelasan. Angkanya tetap ditampilkan supaya kamu tahu itu bukan animasi karangan, melainkan rumus yang sama dengan yang ada di bukumu.",
+            "Selama ini kita mungkin hafal rumusnya, tapi kesulitan membayangkan bentuk aslinya. Saat sudut tembak diubah, variabel apa yang paling berdampak? Kenapa jarak maksimal selalu berada di 45 derajat?",
+            "Daripada membaca satu halaman buku, geser saja kenopnya dan saksikan lintasannya langsung. Angka aslinya tetap dimunculkan—membuktikan bahwa ini fisika sungguhan, bukan sekadar animasi tebakan.",
           ],
         },
         {
@@ -41,14 +41,14 @@ export default function About() {
         {
           head: "Batas yang perlu kamu tahu",
           body: [
-            "Semua simulasinya memakai model ideal: tanpa hambatan udara, lensa dianggap tipis, percepatan gravitasi dianggap tetap. Angka yang keluar benar untuk model itu, bukan untuk dunia nyata yang punya gesekan dan aberasi.",
+            "Semua simulasi memakai model ideal: tanpa hambatan udara, lensa dianggap tipis, percepatan gravitasi dianggap tetap. Angka yang keluar benar untuk model itu, bukan untuk dunia nyata yang punya gesekan dan aberasi.",
             "Pakai ini sebagai alat latihan, bukan sebagai rujukan pengukuran, dan bukan pengganti praktikum di laboratorium sungguhan.",
           ],
         },
         {
           head: "Akun dan data",
           body: [
-            "Mode belajar tidak meminta apa apa. Akun baru diperlukan kalau kamu mau mengerjakan misi, karena waktu pengerjaan, XP, dan papan rekor perlu tempat menyimpan.",
+            "Mode belajar tidak memerlukan akun. Akun baru diperlukan kalau kamu ingin mengerjakan misi, karena waktu pengerjaan, XP, dan papan rekor perlu tempat menyimpan.",
             "Nama panggilan yang tampil di papan rekor kamu yang pilih sendiri, jadi tidak perlu memakai nama asli. Rinciannya ada di halaman privasi.",
           ],
         },
