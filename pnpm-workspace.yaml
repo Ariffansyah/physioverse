@@ -1,3 +1,5 @@
 allowBuilds:
   sharp: false
   unrs-resolver: false
+overrides:
+  brace-expansion@5: ^5.0.12
